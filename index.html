@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Skydive Tracker v2</title>
+  <style>
+    :root{
+      --bg:#0b1220;          /* deep blue */
+      --panel:#121a2b;       /* card bg */
+      --panel-2:#0f1626;     /* darker */
+      --text:#ebf4ff;        /* near-white */
+      --muted:#9fb3d0;       /* muted text */
+      --primary:#4cc9f0;     /* cyan */
+      --primary-2:#4895ef;   /* blue */
+      --accent:#f72585;      /* pink */
+      --good:#2dd4bf;        /* teal */
+      --warn:#fbbf24;        /* amber */
+      --bad:#ef4444;         /* red */
+      --ok:#22c55e;          /* green */
+      --chip:#1f2940;        /* chip bg */
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,Ubuntu,"Apple Color Emoji","Segoe UI Emoji";background:linear-gradient(135deg,#0b1220 0%,#0d1730 45%, #0a1230 100%);color:var(--text)}
+    a{color:var(--primary)}
+    header{
+      position:sticky;top:0;z-index:4;
+      backdrop-filter:saturate(1.1) blur(10px);
+      background:linear-gradient(180deg,rgba(10,18,40,.9),rgba(10,18,40,.6));
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .bar{max-width:1200px;margin:0 auto;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 18px}
+    .brand{display:flex;gap:12px;align-items:center;font-weight:800;letter-spacing:.4px}
+    .logo{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 30% 30%, #4cc9f0, #4895ef 60%, #f72585 100%);box-shadow:var(--shadow)}
+    .logo span{font-size:18px;color:#08111f;font-weight:900}
+    .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .btn{border:0;border-radius:12px;padding:10px 14px;background:var(--primary-2);color:#021026;font-weight:700;box-shadow:var(--shadow);cursor:pointer}
+    .btn:hover{filter:brightness(1.05)}
+    .btn.secondary{background:var(--chip);color:var(--text);border:1px solid rgba(255,255,255,.08)}
+    .btn.warn{background:var(--warn);color:#1b1300}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--text)}
+    .btn.icon{padding:8px 10px;display:flex;gap:6px;align-items:center}
+    .chip{background:var(--chip);border:1px solid rgba(255,255,255,.08);padding:6px 10px;border-radius:999px;color:var(--muted);font-weight:600;display:inline-flex;gap:8px;align-items:center}
+
+    main{max-width:1200px;margin:24px auto;padding:0 18px;display:grid;grid-template-columns:330px 1fr 360px;gap:16px}
+    @media (max-width:1100px){main{grid-template-columns:1fr;}}
+
+    .card{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid rgba(255,255,255,.08);box-shadow:var(--shadow);border-radius:var(--radius);padding:16px}
+    .card h3{margin:0 0 10px 0;font-size:18px}
+    .sub{color:var(--muted);font-size:13px}
+
+    .auth{max-width:880px;margin:48px auto;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .auth .pane{padding:18px;border-radius:var(--radius);background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid rgba(255,255,255,.08)}
+    .auth h2{margin:8px 0 14px 0}
+    label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:#0b1324;color:var(--text)}
+    textarea{min-height:70px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+    .stats{display:grid;gap:10px}
+    .progress{height:12px;background:#0b1324;border:1px solid rgba(255,255,255,.12);border-radius:999px;overflow:hidden}
+    .progress>span{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0%}
+
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px 8px;text-align:left;border-bottom:1px dashed rgba(255,255,255,.08);font-size:13px}
+    th{color:var(--muted);font-weight:700}
+    tr:hover td{background:rgba(255,255,255,.03)}
+
+    .badge{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:6px 10px;background:linear-gradient(180deg,#15213a,#0f1730);border:1px solid rgba(255,255,255,.12);margin:4px 6px 0 0}
+    .badge svg{width:16px;height:16px}
+
+    .weatherGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:700px){.weatherGrid{grid-template-columns:1fr}}
+    .pill{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:#0b1324;font-size:12px;color:var(--muted)}
+    .status{display:inline-flex;gap:8px;align-items:center;font-weight:800}
+    .status.go{color:var(--ok)}
+    .status.caution{color:var(--warn)}
+    .status.hold{color:var(--bad)}
+
+    .footerNote{margin-top:8px;color:var(--muted);font-size:12px}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <div class="brand">
+        <div class="logo"><span>🪂</span></div>
+        <div>
+          <div>Skydive Tracker <span class="pill" id="appVersion">v2</span></div>
+          <div class="sub">Log je sprongen • Levels • Badges • Live weer & veiligheid</div>
+        </div>
+      </div>
+      <div class="toolbar" id="topToolbar" hidden>
+        <span class="chip" id="chipUser">👤 —</span>
+        <span class="chip" id="chipLevel">🏆 Lv —</span>
+        <button class="btn secondary" id="btnExport">Export</button>
+        <label class="btn ghost" for="importFile">Import</label>
+        <input id="importFile" type="file" accept="application/json" class="hidden" />
+        <button class="btn warn" id="btnLogout">Log uit</button>
+      </div>
+    </div>
+  </header>
+
+  <section id="authSection" class="auth">
+    <div class="pane">
+      <h2>Inloggen</h2>
+      <label>Gebruikersnaam</label>
+      <input id="loginUser" placeholder="bijv. thijs" />
+      <label>Wachtwoord</label>
+      <input id="loginPass" type="password" placeholder="••••••" />
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="btn" id="btnLogin">Inloggen</button>
+      </div>
+    </div>
+    <div class="pane">
+      <h2>Account Aanmaken</h2>
+      <label>Gebruikersnaam</label>
+      <input id="regUser" placeholder="kies een naam" />
+      <label>Wachtwoord</label>
+      <input id="regPass" type="password" placeholder="min. 6 karakters" />
+      <label>Standaard dropzone (naam)</label>
+      <input id="regDZ" placeholder="Skydive Teuge" value="Skydive Teuge" />
+      <div class="grid-2">
+        <div>
+          <label>Latitude</label>
+          <input id="regLat" type="number" step="0.0001" value="52.2375" />
+        </div>
+        <div>
+          <label>Longitude</label>
+          <input id="regLon" type="number" step="0.0001" value="6.0500" />
+        </div>
+      </div>
+      <label>Open‑Meteo API‑URL (optioneel)</label>
+      <input id="regApi" placeholder="Laat leeg om automatisch te gebruiken" />
+      <div class="footerNote">Geen API‑key nodig. We gebruiken Open‑Meteo voor live weer.</div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="btn" id="btnRegister">Account aanmaken</button>
+      </div>
+    </div>
+  </section>
+
+  <main id="app" class="hidden">
+    <!-- LEFT: STATS & BADGES -->
+    <div class="card">
+      <h3>Jouw statistieken</h3>
+      <div class="stats" id="statsBox">
+        <div><b>Totaal sprongen:</b> <span id="statJumps">0</span></div>
+        <div><b>Totaal vrije val:</b> <span id="statFreefall">0s</span></div>
+        <div><b>Hoogste exit:</b> <span id="statMaxExit">—</span></div>
+        <div style="margin-top:6px">
+          <div class="sub">Progressie naar volgend level</div>
+          <div class="progress"><span id="levelBar" style="width:0%"></span></div>
+          <div class="sub" id="levelText">Lv 1 → 0 / 500 XP</div>
+        </div>
+      </div>
+      <h3 style="margin-top:16px">Badges</h3>
+      <div id="badges"></div>
+    </div>
+
+    <!-- CENTER: WEATHER + LOG + TABLE -->
+    <div class="card">
+      <h3>Live Weer & Veiligheidscheck</h3>
+      <div class="sub" id="weatherNote">Op basis van jouw dropzone‑coördinaten</div>
+      <div class="weatherGrid" style="margin-top:8px">
+        <div>
+          <div class="sub">Weer snapshot (dichtstbijzijnde uur)</div>
+          <div id="weatherData">—</div>
+          <div id="safetyStatus" style="margin-top:8px" class="status">—</div>
+        </div>
+        <div>
+          <div class="sub">Instellingen</div>
+          <label>Open‑Meteo API‑URL</label>
+          <input id="apiUrl" />
+          <div class="grid-3">
+            <div>
+              <label>Lat</label>
+              <input id="setLat" type="number" step="0.0001" />
+            </div>
+            <div>
+              <label>Lon</label>
+              <input id="setLon" type="number" step="0.0001" />
+            </div>
+            <div>
+              <label>&nbsp;</label>
+              <button class="btn" id="btnRefresh">Ververs</button>
+            </div>
+          </div>
+          <div class="footerNote">Drempels (wind beginner ≤22 km/u; gevorderd ≤32 km/u; zicht ≥5 km; bewolking ≤60%; neerslagkans ≤20%). Altijd S&TA/DZ‑regels volgen.</div>
+        </div>
+      </div>
+
+      <hr style="border:0;border-top:1px dashed rgba(255,255,255,.12);margin:16px 0">
+
+      <h3>Sprong loggen</h3>
+      <form id="jumpForm">
+        <div class="grid-3">
+          <div>
+            <label>Datum & tijd</label>
+            <input id="jfDate" type="datetime-local" required />
+          </div>
+          <div>
+            <label>Dropzone</label>
+            <input id="jfDZ" placeholder="Skydive Teuge" required />
+          </div>
+          <div>
+            <label>Type sprong</label>
+            <select id="jfType">
+              <option>Solo</option>
+              <option>Tandem</option>
+              <option>AFF</option>
+              <option>RW</option>
+              <option>Freefly</option>
+              <option>Wingsuit</option>
+              <option>Canopy</option>
+              <option>Coach</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-3">
+          <div>
+            <label>Exit hoogte (m)</label>
+            <input id="jfExit" type="number" step="10" placeholder="4000" required />
+          </div>
+          <div>
+            <label>Opening hoogte (m)</label>
+            <input id="jfOpen" type="number" step="10" placeholder="1200" required />
+          </div>
+          <div>
+            <label>Vrije val (s)</label>
+            <input id="jfFF" type="number" step="1" placeholder="50" required />
+          </div>
+        </div>
+        <div class="grid-3">
+          <div>
+            <label>Lat</label>
+            <input id="jfLat" type="number" step="0.0001" required />
+          </div>
+          <div>
+            <label>Lon</label>
+            <input id="jfLon" type="number" step="0.0001" required />
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:8px">
+            <button type="button" class="btn secondary" id="btnFormWeather">Weer ophalen</button>
+            <button class="btn" type="submit">Opslaan</button>
+          </div>
+        </div>
+        <label>Notities</label>
+        <textarea id="jfNotes" placeholder="line‑up, spot, exit, canopy pattern, landing…"></textarea>
+        <div id="formWeatherSnapshot" class="footerNote">—</div>
+      </form>
+
+      <h3 style="margin-top:16px">Jouw sprongen</h3>
+      <div class="sub" id="jumpCount">0 sprongen</div>
+      <div style="overflow:auto;margin-top:6px">
+        <table id="jumpTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Datum</th>
+              <th>Type</th>
+              <th>DZ</th>
+              <th>Exit(m)</th>
+              <th>FF(s)</th>
+              <th>Wind</th>
+              <th>Weer</th>
+              <th>Veilig</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT: LEADERBOARD + HELP -->
+    <div class="card">
+      <h3>Leaderboard</h3>
+      <div class="sub">Op basis van XP in deze browser</div>
+      <table id="lbTable" style="margin-top:6px">
+        <thead><tr><th>#</th><th>Gebruiker</th><th>Lv</th><th>XP</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <h3 style="margin-top:16px">Snelstart</h3>
+      <ul class="sub">
+        <li>Vul bij <b>Instellingen</b> je gewenste lat/lon of plak je eigen Open‑Meteo URL.</li>
+        <li>Controleer <b>Live Weer</b> en de <b>Veiligheidsstatus</b>.</li>
+        <li>Log je sprong in het formulier, klik <b>Weer ophalen</b> (optioneel), en <b>Opslaan</b>.</li>
+        <li>Je krijgt XP, stijgt in level, badges ontgrendelen automatisch 🎖️</li>
+      </ul>
+      <div class="footerNote">Disclaimer: Deze app is indicatief. Volg altijd de regels en beslissingen van je Dropzone/S&TA en lokale wetgeving.</div>
+    </div>
+  </main>
+
+  <script>
+  (function(){
+    const DEFAULT_HOURLY = [
+      'temperature_2m','relative_humidity_2m','wind_speed_10m','wind_gusts_10m','apparent_temperature',
+      'wind_direction_10m','precipitation_probability','precipitation','weather_code','cloud_cover','visibility'
+    ].join(',');
+    const DEFAULT_TZ = 'Europe/Amsterdam';
+    const DEFAULT_API = `https://api.open-meteo.com/v1/forecast?latitude=52.2375&longitude=6.05&hourly=${DEFAULT_HOURLY}&timezone=${encodeURIComponent(DEFAULT_TZ)}`;
+
+    // Simple store
+    const kUsers = 'sd_users_v2';
+    const kActive = 'sd_active_v2';
+
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    const fmt = (n, d=0) => Number(n).toFixed(d);
+
+    // Password hashing using Web Crypto
+    async function hash(s){
+      const enc = new TextEncoder().encode(s);
+      const buf = await crypto.subtle.digest('SHA-256', enc);
+      return btoa(String.fromCharCode(...new Uint8Array(buf)));
+    }
+
+    function loadUsers(){
+      try{return JSON.parse(localStorage.getItem(kUsers)||'{}');}catch{return {}};
+    }
+    function saveUsers(u){ localStorage.setItem(kUsers, JSON.stringify(u)); }
+    function setActive(username){ localStorage.setItem(kActive, username); }
+    function getActive(){ return localStorage.getItem(kActive)||null; }
+
+    function userData(username){
+      const users = loadUsers();
+      return users[username] || null;
+    }
+
+    function setUser(username, data){
+      const users = loadUsers();
+      users[username] = data;
+      saveUsers(users);
+    }
+
+    function nowLocalDatetime(){
+      const dt = new Date();
+      dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
+      return dt.toISOString().slice(0,16);
+    }
+
+    function ensureUserShape(u){
+      u.profile = u.profile || { dz:"Skydive Teuge", lat:52.2375, lon:6.05, api: DEFAULT_API };
+      u.jumps = Array.isArray(u.jumps) ? u.jumps : [];
+      u.xp = Number.isFinite(u.xp) ? u.xp : 0;
+      u.createdAt = u.createdAt || new Date().toISOString();
+      return u;
+    }
+
+    function calcLevel(xp){
+      // Level curve: 500 XP per level (Lv1 starts at 0)
+      const level = Math.max(1, Math.floor(xp/500)+1);
+      const current = xp % 500;
+      const pct = Math.min(100, (current/500)*100);
+      return {level, current, needed:500-current, pct};
+    }
+
+    function awardXP(jump){
+      // Base 120 XP per jump + altitude bonus + form completion bonus
+      let xp = 120;
+      xp += Math.min(80, Math.floor((jump.exitAlt||0)/100)); // up to +80 for 8000 m (won't happen)
+      if((jump.ff||0) > 45) xp += 20;
+      if(jump.type && jump.type !== 'Tandem') xp += 20;
+      return xp;
+    }
+
+    function computeBadges(jumps){
+      const total = jumps.length;
+      const ff = jumps.reduce((a,j)=>a+(j.ff||0),0);
+      const maxExit = Math.max(0,...jumps.map(j=>j.exitAlt||0));
+      const streakNoRain = jumps.reduce((streak,j)=> (j.weather && (j.weather.precipProb||0) <= 10) ? streak+1 : 0, 0);
+      const badges = [];
+      if(total>=1) badges.push({name:'First Jump',icon:'🎉'});
+      if(total>=10) badges.push({name:'10 Jumps',icon:'🔟'});
+      if(total>=25) badges.push({name:'25 Jumps',icon:'2️⃣5️⃣'});
+      if(ff>=600) badges.push({name:'Freefall 10 min',icon:'⏱️'});
+      if(maxExit>=4000) badges.push({name:'4k Exit',icon:'🗻'});
+      if(streakNoRain>=3) badges.push({name:'Dry Streak x3',icon:'☀️'});
+      return badges;
+    }
+
+    function renderBadges(list){
+      const box = $('#badges');
+      box.innerHTML = list.length ? '' : '<span class="sub">Nog geen badges. Log je eerste sprong!</span>';
+      list.forEach(b=>{
+        const el = document.createElement('span');
+        el.className='badge';
+        el.innerHTML = `<span>${b.icon}</span> <b>${b.name}</b>`;
+        box.appendChild(el);
+      });
+    }
+
+    function wmoCodeToText(code){
+      // Short mapping for main conditions
+      const map = {
+        0:'Kraakkhelder', 1:'Overwegend helder', 2:'Gedeeltelijk bewolkt', 3:'Bewolkt',
+        45:'Mist', 48:'Aanhoudende rijp-mist', 51:'Motregen licht', 53:'Motregen', 55:'Motregen zwaar',
+        56:'IJzel licht',57:'IJzel',61:'Regen licht',63:'Regen',65:'Regen zwaar',
+        66:'IJzel regen licht',67:'IJzel regen',71:'Sneeuw licht',73:'Sneeuw',75:'Sneeuw zwaar',
+        77:'Sneeuwkorrels',80:'Buien licht',81:'Buien',82:'Buien zwaar',85:'Sneeuwbuien licht',86:'Sneeuwbuien',
+        95:'Onweer',96:'Onweer met hagel',99:'Hevig onweer'
+      };
+      return map[code] || `Code ${code}`;
+    }
+
+    function evalSafety(userLevel, w){
+      // Defaults for missing
+      const wind = Number(w.wind||0);
+      const gust = Number(w.gust||0);
+      const clouds = Number(w.cloud||0);
+      const vis = Number(w.vis||0); // meters
+      const pprob = Number(w.precipProb||0);
+      const prate = Number(w.precip||0);
+
+      const windLimit = userLevel < 3 ? 22 : 32; // km/h
+      const gustLimit = windLimit + 10;
+      const okWind = wind <= windLimit;
+      const okGust = gust <= gustLimit;
+      const okCloud = clouds <= 60;
+      const okVis = vis >= 5000; // 5 km
+      const okRain = (pprob <= 20) && (prate <= 0.1);
+
+      const reasons = [];
+      if(!okWind) reasons.push(`Wind ${fmt(wind)} km/u > ${windLimit}`);
+      if(!okGust) reasons.push(`Gust ${fmt(gust)} km/u > ${gustLimit}`);
+      if(!okCloud) reasons.push(`Bewolking ${fmt(clouds)}% > 60%`);
+      if(!okVis) reasons.push(`Zicht ${fmt(vis/1000,1)} km < 5 km`);
+      if(!okRain) reasons.push(`Neerslag (${fmt(pprob)}% / ${fmt(prate,1)} mm)`);
+
+      let status='go', label='GO';
+      if(reasons.length>=2){ status='hold'; label='HOLD'; }
+      else if(reasons.length===1){ status='caution'; label='CAUTION'; }
+      return {status, label, reasons};
+    }
+
+    function fillStats(u){
+      const jumps = u.jumps;
+      $('#jumpCount').textContent = `${jumps.length} sprongen`;
+      $('#statJumps').textContent = jumps.length;
+      const ff = jumps.reduce((a,j)=>a+(j.ff||0),0);
+      $('#statFreefall').textContent = `${ff}s`;
+      const maxExit = Math.max(0,...jumps.map(j=>j.exitAlt||0));
+      $('#statMaxExit').textContent = maxExit? `${maxExit} m`:'—';
+      const lv = calcLevel(u.xp);
+      $('#chipLevel').textContent = `🏆 Lv ${lv.level}`;
+      $('#levelBar').style.width = `${lv.pct}%`;
+      $('#levelText').textContent = `Lv ${lv.level} → ${lv.current} / 500 XP`;
+    }
+
+    function renderTable(u){
+      const tb = $('#jumpTable tbody');
+      tb.innerHTML = '';
+      u.jumps
+        .map((j,i)=> ({...j, i, date:new Date(j.date)}))
+        .sort((a,b)=> b.date - a.date)
+        .forEach((j,idx)=>{
+          const tr = document.createElement('tr');
+          const w = j.weather || {};
+          const safe = evalSafety(calcLevel(u.xp).level, w);
+          tr.innerHTML = `
+            <td>${u.jumps.length - j.i}</td>
+            <td>${j.date.toLocaleString()}</td>
+            <td>${j.type||''}</td>
+            <td>${j.dz||''}</td>
+            <td>${j.exitAlt||''}</td>
+            <td>${j.ff||''}</td>
+            <td>${w.wind? fmt(w.wind):'-'}/${w.gust?fmt(w.gust):'-'}</td>
+            <td>${wmoCodeToText(w.code||'-')}</td>
+            <td>${safe.label}</td>
+            <td>
+              <button class="btn icon ghost" data-ed="${j.i}">✏️</button>
+              <button class="btn icon warn" data-del="${j.i}">🗑️</button>
+            </td>`;
+          tb.appendChild(tr);
+        });
+
+      // edit/delete handlers
+      tb.querySelectorAll('[data-del]').forEach(btn=>btn.onclick = ()=>{
+        const i = Number(btn.getAttribute('data-del'));
+        u.jumps.splice(i,1);
+        setUser(active, u);
+        refreshAll();
+      });
+      tb.querySelectorAll('[data-ed]').forEach(btn=>btn.onclick = ()=>{
+        const i = Number(btn.getAttribute('data-ed'));
+        const j = u.jumps[i];
+        $('#jfDate').value = j.date.slice(0,16);
+        $('#jfDZ').value = j.dz; $('#jfType').value = j.type;
+        $('#jfExit').value = j.exitAlt; $('#jfOpen').value = j.openAlt; $('#jfFF').value = j.ff;
+        $('#jfLat').value = j.lat; $('#jfLon').value = j.lon; $('#jfNotes').value = j.notes||'';
+        window.scrollTo({top:0,behavior:'smooth'});
+      });
+    }
+
+    function renderLeaderboard(){
+      const users = loadUsers();
+      const rows = Object.entries(users).map(([name,u])=>({name, xp:u.xp||0, lv:calcLevel(u.xp||0).level}))
+        .sort((a,b)=> b.xp - a.xp);
+      const tb = $('#lbTable tbody');
+      tb.innerHTML = '';
+      rows.forEach((r,i)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${i+1}</td><td>${r.name}</td><td>${r.lv}</td><td>${r.xp}</td>`;
+        tb.appendChild(tr);
+      });
+    }
+
+    async function fetchWeather(lat, lon, apiOverride){
+      const base = apiOverride && apiOverride.trim().length ? apiOverride.trim() : DEFAULT_API;
+      let url = base;
+      try{
+        const u = new URL(base);
+        if(u.searchParams.has('latitude')) u.searchParams.set('latitude', String(lat));
+        if(u.searchParams.has('longitude')) u.searchParams.set('longitude', String(lon));
+        if(!u.searchParams.has('hourly')) u.searchParams.set('hourly', DEFAULT_HOURLY);
+        if(!u.searchParams.has('timezone')) u.searchParams.set('timezone', DEFAULT_TZ);
+        url = u.toString();
+      }catch{ /* fallback: assume full url already */ }
+
+      const r = await fetch(url);
+      if(!r.ok) throw new Error('Weer ophalen mislukt');
+      const j = await r.json();
+      const idx = nearestHourIndex(j.hourly.time);
+      const data = {
+        time: j.hourly.time[idx],
+        temp: j.hourly.temperature_2m?.[idx],
+        rh: j.hourly.relative_humidity_2m?.[idx],
+        wind: j.hourly.wind_speed_10m?.[idx],
+        gust: j.hourly.wind_gusts_10m?.[idx],
+        app: j.hourly.apparent_temperature?.[idx],
+        dir: j.hourly.wind_direction_10m?.[idx],
+        precipProb: j.hourly.precipitation_probability?.[idx],
+        precip: j.hourly.precipitation?.[idx],
+        code: j.hourly.weather_code?.[idx],
+        cloud: j.hourly.cloud_cover?.[idx],
+        vis: j.hourly.visibility?.[idx]
+      };
+      return data;
+    }
+
+    function nearestHourIndex(timeArray){
+      const now = Date.now();
+      let best = 0, bestDiff = Infinity;
+      timeArray.forEach((t,i)=>{ const d = Math.abs(new Date(t).getTime()-now); if(d<bestDiff){best=i;bestDiff=d;} });
+      return best;
+    }
+
+    function renderWeather(u, w){
+      const lv = calcLevel(u.xp).level;
+      const s = evalSafety(lv, w);
+      $('#weatherData').innerHTML = `
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <span class="pill">🕒 ${new Date(w.time).toLocaleString()}</span>
+          <span class="pill">🌡️ ${fmt(w.temp,1)}°C (gevoel ${fmt(w.app,1)}°)</span>
+          <span class="pill">💨 ${fmt(w.wind,0)} km/u, gust ${fmt(w.gust,0)}</span>
+          <span class="pill">☁️ ${fmt(w.cloud,0)}%</span>
+          <span class="pill">👁️ ${fmt((w.vis||0)/1000,1)} km</span>
+          <span class="pill">🌧️ ${fmt(w.precipProb||0,0)}% / ${fmt(w.precip||0,1)} mm</span>
+          <span class="pill">${wmoCodeToText(w.code)}</span>
+        </div>`;
+      const status = $('#safetyStatus');
+      status.className = `status ${s.status}`;
+      const icon = s.status==='go'?'✅': s.status==='caution'?'⚠️':'⛔';
+      status.textContent = `${icon} ${s.label}${s.reasons.length? ' — '+s.reasons.join(' · '): ''}`;
+    }
+
+    function refreshAll(){
+      const u = ensureUserShape(userData(active));
+      setUser(active,u);
+      // header
+      $('#chipUser').textContent = `👤 ${active}`;
+      $('#apiUrl').value = u.profile.api || DEFAULT_API;
+      $('#setLat').value = u.profile.lat;
+      $('#setLon').value = u.profile.lon;
+      $('#jfDZ').value = u.profile.dz;
+      $('#jfLat').value = u.profile.lat;
+      $('#jfLon').value = u.profile.lon;
+      $('#jfDate').value = nowLocalDatetime();
+
+      fillStats(u);
+      renderBadges(computeBadges(u.jumps));
+      renderTable(u);
+      renderLeaderboard();
+      fetchWeather(u.profile.lat, u.profile.lon, u.profile.api).then(w=>{
+        lastWeather = w; renderWeather(u,w);
+      }).catch(e=>{
+        $('#weatherData').innerHTML = `<span class="sub">Weer niet beschikbaar: ${e.message}</span>`;
+        $('#safetyStatus').className = 'status';
+        $('#safetyStatus').textContent = '—';
+      });
+    }
+
+    // AUTH logic
+    let active = getActive();
+    let lastWeather = null;
+
+    function showApp(){
+      $('#authSection').classList.add('hidden');
+      $('#app').classList.remove('hidden');
+      $('#topToolbar').hidden = false;
+      refreshAll();
+    }
+
+    function showAuth(){
+      $('#authSection').classList.remove('hidden');
+      $('#app').classList.add('hidden');
+      $('#topToolbar').hidden = true;
+    }
+
+    if(active && userData(active)) showApp(); else showAuth();
+
+    // Register
+    $('#btnRegister').onclick = async()=>{
+      const name = $('#regUser').value.trim();
+      const pass = $('#regPass').value;
+      const dz = $('#regDZ').value.trim() || 'Skydive Teuge';
+      const lat = parseFloat($('#regLat').value)||52.2375;
+      const lon = parseFloat($('#regLon').value)||6.05;
+      const api = ($('#regApi').value||'').trim() || DEFAULT_API;
+      if(!name || pass.length<6){ alert('Vul een gebruikersnaam in en een wachtwoord (min. 6)'); return; }
+      const users = loadUsers();
+      if(users[name]){ alert('Gebruikersnaam bestaat al'); return; }
+      const pwd = await hash(pass);
+      users[name] = ensureUserShape({pwd, profile:{dz,lat,lon,api}, jumps:[], xp:0});
+      saveUsers(users);
+      setActive(name);
+      active = name;
+      showApp();
+    };
+
+    // Login
+    $('#btnLogin').onclick = async()=>{
+      const name = $('#loginUser').value.trim();
+      const pass = $('#loginPass').value;
+      const u = userData(name);
+      if(!u){ alert('Onbekende gebruiker'); return; }
+      const match = await hash(pass);
+      if(u.pwd !== match){ alert('Wachtwoord onjuist'); return; }
+      setActive(name); active = name; showApp();
+    };
+
+    // Logout
+    $('#btnLogout').onclick = ()=>{ setActive(''); active = null; showAuth(); };
+
+    // Update settings + refresh weather
+    $('#btnRefresh').onclick = ()=>{
+      const u = userData(active);
+      u.profile.api = $('#apiUrl').value.trim()||DEFAULT_API;
+      u.profile.lat = parseFloat($('#setLat').value)||u.profile.lat;
+      u.profile.lon = parseFloat($('#setLon').value)||u.profile.lon;
+      setUser(active,u);
+      refreshAll();
+    };
+
+    // Export / Import
+    $('#btnExport').onclick = ()=>{
+      const blob = new Blob([JSON.stringify(userData(active),null,2)],{type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${active}_skydive_export.json`;
+      a.click();
+    };
+    $('#importFile').onchange = async (e)=>{
+      const f = e.target.files?.[0]; if(!f) return;
+      const txt = await f.text();
+      try{
+        const data = ensureUserShape(JSON.parse(txt));
+        const u = userData(active);
+        // Merge: append jumps (avoid duplicates by date+dz+exit)
+        const key = j=>`${j.date}|${j.dz}|${j.exitAlt}`;
+        const known = new Set(u.jumps.map(key));
+        const toAdd = data.jumps.filter(j=>!known.has(key(j)));
+        u.jumps.push(...toAdd);
+        u.xp = Math.max(u.xp, data.xp||0);
+        setUser(active,u);
+        refreshAll();
+        alert(`Geïmporteerd: ${toAdd.length} sprongen`);
+      }catch(err){ alert('Import mislukt: '+err.message); }
+      e.target.value = '';
+    };
+
+    // Jump form
+    $('#btnFormWeather').onclick = async()=>{
+      const lat = parseFloat($('#jfLat').value), lon = parseFloat($('#jfLon').value);
+      const u = userData(active);
+      try{ const w = await fetchWeather(lat,lon,u.profile.api); lastWeather = w;
+        $('#formWeatherSnapshot').textContent = `Weer: ${fmt(w.wind,0)} km/u wind, gust ${fmt(w.gust,0)}, ${fmt((w.vis||0)/1000,1)} km zicht, ${fmt(w.cloud,0)}% bewolking, ${fmt(w.precipProb||0,0)}%/ ${fmt(w.precip||0,1)} mm, ${wmoCodeToText(w.code)}`;
+      }catch(e){ $('#formWeatherSnapshot').textContent = 'Weer ophalen mislukt.'; }
+    };
+
+    $('#jumpForm').onsubmit = (ev)=>{
+      ev.preventDefault();
+      const u = userData(active);
+      const j = {
+        date: new Date($('#jfDate').value).toISOString(),
+        dz: $('#jfDZ').value.trim(),
+        type: $('#jfType').value,
+        exitAlt: parseInt($('#jfExit').value),
+        openAlt: parseInt($('#jfOpen').value),
+        ff: parseInt($('#jfFF').value),
+        lat: parseFloat($('#jfLat').value),
+        lon: parseFloat($('#jfLon').value),
+        notes: $('#jfNotes').value.trim(),
+        weather: lastWeather || null
+      };
+      if(!j.date || !j.dz || !Number.isFinite(j.exitAlt) || !Number.isFinite(j.openAlt)){
+        alert('Vul de verplichte velden in.'); return;
+      }
+      u.jumps.push(j);
+      const gained = awardXP(j);
+      u.xp += gained;
+      setUser(active,u);
+      // reset quick fields
+      $('#jfFF').value = '';
+      $('#jfNotes').value = '';
+      refreshAll();
+    };
+
+    // Init date picker default
+    $('#jfDate').value = nowLocalDatetime();
+
+  })();
+  </script>
+</body>
+</html>
