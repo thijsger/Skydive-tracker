@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Skydive Tracker v3 (Cloud)</title>
+  <title>Skydive Tracker v4 — Cloud + Geocoding + Checklists</title>
   <style>
     :root{
       --bg:#0b1220;--panel:#121a2b;--panel-2:#0f1626;--text:#ebf4ff;--muted:#9fb3d0;--primary:#4cc9f0;--primary-2:#4895ef;--accent:#f72585;--good:#2dd4bf;--warn:#fbbf24;--bad:#ef4444;--ok:#22c55e;--chip:#1f2940;--shadow:0 10px 30px rgba(0,0,0,.35);--radius:16px;
@@ -23,7 +23,7 @@
     .btn.warn{background:var(--warn);color:#1b1300}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--text)}
     .chip{background:var(--chip);border:1px solid rgba(255,255,255,.08);padding:6px 10px;border-radius:999px;color:var(--muted);font-weight:600;display:inline-flex;gap:8px;align-items:center}
-    main{max-width:1200px;margin:24px auto;padding:0 18px;display:grid;grid-template-columns:330px 1fr 360px;gap:16px}
+    main{max-width:1200px;margin:24px auto;padding:0 18px;display:grid;grid-template-columns:340px 1fr 380px;gap:16px}
     @media (max-width:1100px){main{grid-template-columns:1fr;}}
     .card{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid rgba(255,255,255,.08);box-shadow:var(--shadow);border-radius:var(--radius);padding:16px}
     .card h3{margin:0 0 10px 0;font-size:18px}
@@ -33,15 +33,21 @@
     textarea{min-height:70px}
     .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
     table{width:100%;border-collapse:collapse}
     th,td{padding:10px 8px;text-align:left;border-bottom:1px dashed rgba(255,255,255,.08);font-size:13px}
     th{color:var(--muted);font-weight:700}
     tr:hover td{background:rgba(255,255,255,.03)}
-    .badge{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:6px 10px;background:linear-gradient(180deg,#15213a,#0f1730);border:1px solid rgba(255,255,255,.12);margin:4px 6px 0 0}
     .pill{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:#0b1324;font-size:12px;color:var(--muted)}
     .status{display:inline-flex;gap:8px;align-items:center;font-weight:800}
     .status.go{color:var(--ok)}.status.caution{color:var(--warn)}.status.hold{color:var(--bad)}
     .hidden{display:none}
+    .suggest{position:relative}
+    .suggest ul{position:absolute;z-index:5;left:0;right:0;margin:6px 0 0;padding:6px;background:#0b1324;border:1px solid rgba(255,255,255,.12);border-radius:12px;list-style:none}
+    .suggest li{padding:8px;border-radius:10px;cursor:pointer}
+    .suggest li:hover{background:rgba(255,255,255,.06)}
+    .checkRow{display:grid;grid-template-columns:1fr 120px 120px 30px;gap:8px;align-items:center;margin-bottom:6px}
+    .checkRow input[type="checkbox"]{width:18px;height:18px}
   </style>
 
   <!-- Supabase client -->
@@ -49,7 +55,8 @@
   <script>
     // VUL DIT IN met jouw Supabase project gegevens
     const SUPABASE_URL = "https://jptgghxniqqoyxxxgcmy.supabase.co"; // <-- aanpassen
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwdGdnaHhuaXFxb3l4eHhnY215Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTQwMTIsImV4cCI6MjA3MTc3MDAxMn0.KugjNF2p0hlHguXuedEU63GzLbRRYcc2kfF_4Ul6CRk";           // <-- aanpassen
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwdGdnaHhuaXFxb3l4eHhnY215Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTQwMTIsImV4cCI6MjA3MTc3MDAxMn0.KugjNF2p0hlHguXuedEU63GzLbRRYcc2kfF_4Ul6CRk
+";           // <-- aanpassen
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   </script>
 </head>
@@ -59,8 +66,8 @@
       <div class="brand">
         <div class="logo"><span>🪂</span></div>
         <div>
-          <div>Skydive Tracker <span class="pill">v3 cloud</span></div>
-          <div class="sub">Accounts in Supabase • Sprongen in de cloud • Publiek leaderboard</div>
+          <div>Skydive Tracker <span class="pill">v4 cloud</span></div>
+          <div class="sub">Locatie zoeken • Betere login • Checklists A/B • Publiek leaderboard</div>
         </div>
       </div>
       <div class="toolbar" id="topToolbar" hidden>
@@ -81,6 +88,7 @@
         <label>Wachtwoord</label>
         <input id="loginPass" type="password" placeholder="••••••" />
         <button class="btn" id="btnLogin" style="margin-top:10px">Inloggen</button>
+        <div class="sub" style="margin-top:8px">Tip: Gebruik <b>e‑mail</b> als login. Je naam op het leaderboard stel je in bij je profiel.</div>
       </div>
       <div>
         <div class="sub">Registreren (maakt ook je profiel aan)</div>
@@ -90,26 +98,6 @@
         <input id="regPass" type="password" placeholder="min. 6 karakters" />
         <label>Publieke gebruikersnaam (voor leaderboard)</label>
         <input id="regUsername" placeholder="bijv. thijs" />
-        <div class="grid-2">
-          <div>
-            <label>Standaard DZ</label>
-            <input id="regDZ" value="Skydive Teuge" />
-          </div>
-          <div>
-            <label>Open‑Meteo URL (optioneel)</label>
-            <input id="regApi" placeholder="Laat leeg voor auto" />
-          </div>
-        </div>
-        <div class="grid-2">
-          <div>
-            <label>Lat</label>
-            <input id="regLat" type="number" step="0.0001" value="52.2375" />
-          </div>
-          <div>
-            <label>Lon</label>
-            <input id="regLon" type="number" step="0.0001" value="6.05" />
-          </div>
-        </div>
         <button class="btn" id="btnRegister" style="margin-top:10px">Account aanmaken</button>
       </div>
     </div>
@@ -117,30 +105,39 @@
   </section>
 
   <main id="app" class="hidden">
+    <!-- PROFIEL & LOCATIE -->
     <div class="card">
-      <h3>Jouw profiel</h3>
-      <div class="sub">Profielwaarden worden opgeslagen in Supabase</div>
-      <div class="grid-3" style="margin-top:6px">
-        <div><label>Gebruikersnaam</label><input id="pUsername" /></div>
-        <div><label>Dropzone</label><input id="pDZ" /></div>
-        <div><label>Open‑Meteo URL</label><input id="pApi" /></div>
+      <h3>Profiel & Locatie</h3>
+      <div class="grid-3">
+        <div><label>Gebruikersnaam (leaderboard)</label><input id="pUsername" /></div>
+        <div><label>Dropzone naam</label><input id="pDZ" value="Skydive Teuge" /></div>
+        <div><label>Open‑Meteo URL (optioneel)</label><input id="pApi" placeholder="Laat leeg om automatisch te gebruiken" /></div>
       </div>
       <div class="grid-3">
+        <div class="suggest">
+          <label>Locatie zoeken (stad, DZ, berg…)</label>
+          <input id="locSearch" placeholder="bijv. Teuge, Rotterdam, Amersfoort" />
+          <ul id="locList" class="hidden"></ul>
+        </div>
         <div><label>Lat</label><input id="pLat" type="number" step="0.0001" /></div>
         <div><label>Lon</label><input id="pLon" type="number" step="0.0001" /></div>
-        <div style="display:flex;align-items:flex-end"><button class="btn" id="btnSaveProfile">Opslaan</button></div>
       </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn" id="btnSaveProfile">Opslaan</button>
+        <button class="btn secondary" id="btnRefreshWeather">Ververs weer</button>
+      </div>
+      <div class="sub" style="margin-top:8px">Locatie zoeken gebruikt de <b>Open‑Meteo Geocoding API</b> (gratis, geen key).</div>
     </div>
 
+    <!-- WEER -->
     <div class="card">
       <h3>Live Weer & Veiligheidscheck</h3>
-      <div class="sub" id="weatherNote">Gebaseerd op jouw profielcoördinaten</div>
+      <div class="sub" id="weatherNote">Gebaseerd op je coördinaten</div>
       <div id="weatherData" style="margin-top:8px">—</div>
       <div id="safetyStatus" style="margin-top:8px" class="status">—</div>
-      <div style="margin-top:10px"><button class="btn secondary" id="btnRefreshWeather">Ververs weer</button></div>
-      <div class="sub" style="margin-top:8px">Drempels: wind ≤22 km/u (beginners) of ≤32 km/u (gevorderd), zicht ≥5 km, bewolking ≤60%, neerslagkans ≤20%. Altijd DZ/S&TA volgen.</div>
     </div>
 
+    <!-- SPRONG LOG -->
     <div class="card">
       <h3>Sprong loggen</h3>
       <form id="jumpForm">
@@ -177,8 +174,10 @@
         <textarea id="jfNotes" placeholder="line‑up, spot, exit, canopy pattern, landing…"></textarea>
         <div id="formWeatherSnapshot" class="sub">—</div>
       </form>
+      <div class="sub" style="margin-top:8px">Krijg je de fout <i>Could not find the table 'public.jumps' in the schema cache</i>? Dan zijn je Supabase tabellen nog niet aangemaakt — zie de SQL onderaan deze file.</div>
     </div>
 
+    <!-- TABEL SPRONGEN -->
     <div class="card">
       <h3>Jouw sprongen</h3>
       <div class="sub" id="jumpCount">—</div>
@@ -190,9 +189,29 @@
       </div>
     </div>
 
+    <!-- CHECKLISTS A/B -->
+    <div class="card">
+      <h3>Checklist A‑licentie</h3>
+      <div id="checklistA"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn" id="btnSaveA">Opslaan A‑checklist</button>
+        <button class="btn secondary" id="btnAutoA">Auto‑invullen (op basis van stats)</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Checklist B‑licentie</h3>
+      <div id="checklistB"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn" id="btnSaveB">Opslaan B‑checklist</button>
+        <button class="btn secondary" id="btnAutoB">Auto‑invullen (op basis van stats)</button>
+      </div>
+    </div>
+
+    <!-- LEADERBOARD -->
     <div class="card">
       <h3>Publiek Leaderboard</h3>
-      <div class="sub">Op basis van XP (berekend in view) — iedereen kan dit zien</div>
+      <div class="sub">Iedereen kan dit zien (alleen lezen)</div>
       <table id="lbTable" style="margin-top:6px">
         <thead><tr><th>#</th><th>Gebruiker</th><th>Sprongen</th><th>XP</th></tr></thead>
         <tbody></tbody>
@@ -202,181 +221,261 @@
 
   <script>
   (function(){
-    const DEFAULT_HOURLY = [
-      'temperature_2m','relative_humidity_2m','wind_speed_10m','wind_gusts_10m','apparent_temperature',
-      'wind_direction_10m','precipitation_probability','precipitation','weather_code','cloud_cover','visibility'
-    ].join(',');
+    // ===== CONFIG =====
     const DEFAULT_TZ = 'Europe/Amsterdam';
+    const HOURLY = [ 'temperature_2m','relative_humidity_2m','wind_speed_10m','wind_gusts_10m','apparent_temperature','wind_direction_10m','precipitation_probability','precipitation','weather_code','cloud_cover','visibility' ].join(',');
 
-    // Helpers
+    // ===== DOM HELPERS =====
     const $ = s => document.querySelector(s);
-    const fmt = (n,d=0)=> Number(n).toFixed(d);
-
+    const fmt = (n,d=0)=> Number(n??0).toFixed(d);
     function nowLocalDatetime(){ const dt=new Date(); dt.setMinutes(dt.getMinutes()-dt.getTimezoneOffset()); return dt.toISOString().slice(0,16); }
 
-    function wmoText(code){
-      const map={0:'Kraakhelder',1:'Overwegend helder',2:'Deels bewolkt',3:'Bewolkt',45:'Mist',48:'Rijpmist',51:'Motregen licht',53:'Motregen',55:'Motregen zwaar',56:'IJzel licht',57:'IJzel',61:'Regen licht',63:'Regen',65:'Regen zwaar',66:'IJzel regen licht',67:'IJzel regen',71:'Sneeuw licht',73:'Sneeuw',75:'Sneeuw zwaar',77:'Sneeuwkorrels',80:'Buien licht',81:'Buien',82:'Buien zwaar',85:'Sneeuwbuien licht',86:'Sneeuwbuien',95:'Onweer',96:'Onweer + hagel',99:'Hevig onweer'}; return map[code]||`Code ${code}`;
-    }
+    // ===== WMO MAP & SAFETY =====
+    function wmoText(code){const map={0:'Kraakhelder',1:'Overwegend helder',2:'Deels bewolkt',3:'Bewolkt',45:'Mist',48:'Rijpmist',51:'Motregen licht',53:'Motregen',55:'Motregen zwaar',56:'IJzel licht',57:'IJzel',61:'Regen licht',63:'Regen',65:'Regen zwaar',66:'IJzel regen licht',67:'IJzel regen',71:'Sneeuw licht',73:'Sneeuw',75:'Sneeuw zwaar',77:'Sneeuwkorrels',80:'Buien licht',81:'Buien',82:'Buien zwaar',85:'Sneeuwbuien licht',86:'Sneeuwbuien',95:'Onweer',96:'Onweer + hagel',99:'Hevig onweer'}; return map[code]||`Code ${code}`;}
+    function evalSafety(level, w){ const wind=+w.wind||0,gust=+w.gust||0,cloud=+w.cloud||0,vis=+w.vis||0,p=+w.precipProb||0,r=+w.precip||0; const limit=level<3?22:32,gustLimit=limit+10; const bad=[ wind>limit?`Wind ${fmt(wind)}>${limit}`:null, gust>gustLimit?`Gust ${fmt(gust)}>${gustLimit}`:null, cloud>60?`Bewolking ${fmt(cloud)}%>60%`:null, vis<5000?`Zicht ${fmt(vis/1000,1)}km<5km`:null, !(p<=20 && r<=0.1)?`Neerslag ${fmt(p)}%/${fmt(r,1)}mm`:null ].filter(Boolean); let status='go',label='GO'; if(bad.length===1){status='caution';label='CAUTION';} if(bad.length>=2){status='hold';label='HOLD';} return {status,label,reasons:bad}; }
 
-    function evalSafety(level, w){
-      const wind = Number(w.wind||0), gust=Number(w.gust||0), cloud=Number(w.cloud||0), vis=Number(w.vis||0), p=Number(w.precipProb||0), r=Number(w.precip||0);
-      const limit = level<3?22:32, gustLimit=limit+10;
-      const bad=[
-        wind>limit?`Wind ${fmt(wind)}>${limit}`:null,
-        gust>gustLimit?`Gust ${fmt(gust)}>${gustLimit}`:null,
-        cloud>60?`Bewolking ${fmt(cloud)}%>60%`:null,
-        vis<5000?`Zicht ${fmt(vis/1000,1)}km<5km`:null,
-        !(p<=20 && r<=0.1)?`Neerslag ${fmt(p)}%/${fmt(r,1)}mm`:null
-      ].filter(Boolean);
-      let status='go',label='GO'; if(bad.length===1){status='caution';label='CAUTION';} if(bad.length>=2){status='hold';label='HOLD';}
-      return {status,label,reasons:bad};
-    }
+    // ===== SUPABASE HELPERS =====
+    async function currentUser(){ const { data:{ user } } = await supabase.auth.getUser(); return user; }
+    async function ensureProfile(user){ const { data, error } = await supabase.from('profiles').select('*').eq('id',user.id).single(); if(error && error.code!=='PGRST116'){ console.warn(error); } if(!data){ await supabase.from('profiles').insert({ id:user.id, username:'', dz:'Skydive Teuge', lat:52.2375, lon:6.05, api:null }); return { username:'', dz:'Skydive Teuge', lat:52.2375, lon:6.05, api:null }; } return data; }
 
-    async function supaUser(){ const { data:{ user } } = await supabase.auth.getUser(); return user; }
+    // ===== GEO API (Open‑Meteo Geocoding, geen key nodig) =====
+    async function searchLocation(q){ const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=nl&format=json`; const r=await fetch(url); if(!r.ok) throw new Error('Geocoding mislukt'); const j=await r.json(); return (j.results||[]).map(x=>({ name:`${x.name}${x.admin1? ', '+x.admin1:''}${x.country? ', '+x.country:''}`, lat:x.latitude, lon:x.longitude })); }
 
-    // PROFILE
-    async function loadProfile(){
-      const user = await supaUser(); if(!user) return null;
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      if(error){ console.warn(error); return null; }
-      return data;
-    }
-    async function saveProfile(p){
-      const user = await supaUser(); if(!user) throw new Error('Niet ingelogd');
-      p.id = user.id;
-      const { error } = await supabase.from('profiles').upsert(p);
-      if(error) throw error;
-    }
-
-    // JUMPS
-    async function saveJump(j){
-      const user = await supaUser(); if(!user) throw new Error('Niet ingelogd');
-      const row={ user_id:user.id, dt:new Date(j.date).toISOString(), dz:j.dz, type:j.type, exit_alt:j.exitAlt, open_alt:j.openAlt, ff:j.ff, lat:j.lat, lon:j.lon, notes:j.notes||null, weather:j.weather||null };
-      const { error } = await supabase.from('jumps').insert(row); if(error) throw error;
-    }
-    async function fetchMyJumps(){
-      const { data, error } = await supabase.from('jumps').select('*').order('dt',{ascending:false});
-      if(error) throw error; return data||[];
-    }
-
-    // LEADERBOARD (publieke view)
-    async function fetchLeaderboard(){ const { data, error } = await supabase.from('leaderboard').select('*'); if(error) throw error; return data||[]; }
-
-    // WEATHER
-    async function fetchWeather(lat,lon,api){
-      let url = api && api.trim().length? api.trim() : `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${DEFAULT_HOURLY}&timezone=${encodeURIComponent('Europe/Amsterdam')}`;
-      try{ const u=new URL(url); u.searchParams.set('latitude',lat); u.searchParams.set('longitude',lon); if(!u.searchParams.has('hourly')) u.searchParams.set('hourly',DEFAULT_HOURLY); url=u.toString(); }catch{}
-      const r = await fetch(url); if(!r.ok) throw new Error('Weer mislukt'); const j=await r.json();
-      const idx = nearestHourIndex(j.hourly.time);
-      return { time:j.hourly.time[idx], temp:j.hourly.temperature_2m?.[idx], rh:j.hourly.relative_humidity_2m?.[idx], wind:j.hourly.wind_speed_10m?.[idx], gust:j.hourly.wind_gusts_10m?.[idx], app:j.hourly.apparent_temperature?.[idx], dir:j.hourly.wind_direction_10m?.[idx], precipProb:j.hourly.precipitation_probability?.[idx], precip:j.hourly.precipitation?.[idx], code:j.hourly.weather_code?.[idx], cloud:j.hourly.cloud_cover?.[idx], vis:j.hourly.visibility?.[idx] };
-    }
+    // ===== WEATHER =====
+    async function fetchWeather(lat,lon,api){ let url = api && api.trim()? api.trim() : `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${HOURLY}&timezone=${encodeURIComponent(DEFAULT_TZ)}`; try{ const u=new URL(url); u.searchParams.set('latitude',lat); u.searchParams.set('longitude',lon); if(!u.searchParams.has('hourly')) u.searchParams.set('hourly',HOURLY); if(!u.searchParams.has('timezone')) u.searchParams.set('timezone',DEFAULT_TZ); url=u.toString(); }catch{} const r=await fetch(url); if(!r.ok) throw new Error('Weer mislukt'); const j=await r.json(); const i=nearestHourIndex(j.hourly.time); return { time:j.hourly.time[i], temp:j.hourly.temperature_2m?.[i], rh:j.hourly.relative_humidity_2m?.[i], wind:j.hourly.wind_speed_10m?.[i], gust:j.hourly.wind_gusts_10m?.[i], app:j.hourly.apparent_temperature?.[i], dir:j.hourly.wind_direction_10m?.[i], precipProb:j.hourly.precipitation_probability?.[i], precip:j.hourly.precipitation?.[i], code:j.hourly.weather_code?.[i], cloud:j.hourly.cloud_cover?.[i], vis:j.hourly.visibility?.[i] }; }
     function nearestHourIndex(arr){ const now=Date.now(); let best=0,d=1/0; arr.forEach((t,i)=>{const dt=Math.abs(new Date(t)-now); if(dt<d){d=dt;best=i}}); return best; }
 
-    // RENDER
-    function renderWeather(profile, w){
-      const level = 1; // voor nu: bereken XP/level server-side in de view; level hier niet strikt nodig
-      const s = evalSafety(level,w);
-      $('#weatherData').innerHTML = `
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <span class="pill">🕒 ${new Date(w.time).toLocaleString()}</span>
-          <span class="pill">🌡️ ${fmt(w.temp,1)}°C (gevoel ${fmt(w.app,1)}°)</span>
-          <span class="pill">💨 ${fmt(w.wind,0)} km/u, gust ${fmt(w.gust,0)}</span>
-          <span class="pill">☁️ ${fmt(w.cloud,0)}%</span>
-          <span class="pill">👁️ ${fmt((w.vis||0)/1000,1)} km</span>
-          <span class="pill">🌧️ ${fmt(w.precipProb||0,0)}% / ${fmt(w.precip||0,1)} mm</span>
-          <span class="pill">${wmoText(w.code)}</span>
-        </div>`;
-      const el=$('#safetyStatus'); el.className=`status ${s.status}`; const icon=s.status==='go'?'✅':s.status==='caution'?'⚠️':'⛔'; el.textContent=`${icon} ${s.label}${s.reasons.length? ' — '+s.reasons.join(' · '): ''}`;
+    function renderWeather(profile,w){ const level=1; const s=evalSafety(level,w); $('#weatherData').innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap"><span class=pill>🕒 ${new Date(w.time).toLocaleString()}</span><span class=pill>🌡️ ${fmt(w.temp,1)}°C (gevoel ${fmt(w.app,1)}°)</span><span class=pill>💨 ${fmt(w.wind,0)} km/u, gust ${fmt(w.gust,0)}</span><span class=pill>☁️ ${fmt(w.cloud,0)}%</span><span class=pill>👁️ ${fmt((w.vis||0)/1000,1)} km</span><span class=pill>🌧️ ${fmt(w.precipProb||0,0)}% / ${fmt(w.precip||0,1)} mm</span><span class=pill>${wmoText(w.code)}</span></div>`; const el=$('#safetyStatus'); el.className=`status ${s.status}`; const icon=s.status==='go'?'✅':s.status==='caution'?'⚠️':'⛔'; el.textContent=`${icon} ${s.label}${s.reasons.length? ' — '+s.reasons.join(' · '): ''}`; }
+
+    // ===== JUMPS & LEADERBOARD =====
+    async function saveJump(j){ const user=await currentUser(); if(!user) throw new Error('Niet ingelogd'); const row={ user_id:user.id, dt:new Date(j.date).toISOString(), dz:j.dz, type:j.type, exit_alt:j.exitAlt, open_alt:j.openAlt, ff:j.ff, lat:j.lat, lon:j.lon, notes:j.notes||null, weather:j.weather||null }; const { error } = await supabase.from('jumps').insert(row); if(error) throw error; }
+    async function fetchMyJumps(){ const { data, error } = await supabase.from('jumps').select('*').order('dt',{ascending:false}); if(error) throw error; return data||[]; }
+    async function fetchLeaderboard(){ const { data, error } = await supabase.from('leaderboard').select('*'); if(error) throw error; return data||[]; }
+
+    function renderJumps(rows){ $('#jumpCount').textContent = `${rows.length} sprongen`; const tb=$('#jumpTable tbody'); tb.innerHTML=''; rows.forEach((j,i)=>{ const w=j.weather||{}; const tr=document.createElement('tr'); tr.innerHTML = `<td>${rows.length-i}</td><td>${new Date(j.dt).toLocaleString()}</td><td>${j.type}</td><td>${j.dz}</td><td>${j.exit_alt}</td><td>${j.ff}</td><td>${w.wind?fmt(w.wind,0):'-'}/${w.gust?fmt(w.gust,0):'-'}</td><td>${wmoText(w.code||'-')}</td>`; tb.appendChild(tr); }); }
+    function renderLeaderboard(rows){ const tb=$('#lbTable tbody'); tb.innerHTML=''; rows.forEach((r,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${r.username||'—'}</td><td>${r.jumps||0}</td><td>${r.xp||0}</td>`; tb.appendChild(tr); }); }
+
+    // ===== CHECKLISTS =====
+    const A_ITEMS = {
+      voorwaarden:[{id:'aff',label:'Static-line of AFF gegradueerd'},{id:'knvvl',label:'Lidmaatschapsnummer KNVvL'}],
+      stabiliteit:[
+        {id:'delta10',label:'10 seconden delta'},
+        {id:'tracking10',label:'10 seconden tracking'},
+        {id:'stabiele_achterwaartse_exit',label:'Stabiele achterwaartse exit'},
+        {id:'clear_pull',label:'Clear and Pull'},
+        {id:'instab_vrijeval_opheffen',label:'Onstabiele vrije val opheffen'},
+        {id:'draai_links_360',label:'Draai 360° links'},
+        {id:'draai_rechts_360',label:'Draai 360° rechts'},
+        {id:'backloop',label:'Backloop'}
+      ],
+      landingen15: Array.from({length:10},(_,i)=>({id:`landing15_${i+1}`,label:`15 meter landing #${i+1}`})),
+      formatie:[1,2,3,4,5].map(n=>({id:`form_${n}`,label:`Formatie instructiesprong ${n}`})),
+      algemene:[
+        {id:'25_sprongen',label:'25 vrijeval sprongen'},
+        {id:'15min_vrije_val',label:'15 minuten vrije val tijd'},
+        {id:'spotten',label:'Spotten'},
+        {id:'vouwen',label:'Vouwen hoofdparachute'}
+      ],
+      canopy:[1,2,3,4,5].map(n=>({id:`canopy_${n}`,label:`Canopy Control ${n}`}))
+    };
+
+    const B_ITEMS = {
+      voorwaarden:[{id:'a_brevet',label:'A‑brevet (datum behaald)'},{id:'knvvl_b',label:'Lidmaatschapsnummer KNVvL'},{id:'constructief',label:'Constructieve instelling t.a.v. veiligheid'}],
+      formatie:[1,2,3,4,5].map(n=>({id:`b_form_${n}`,label:`Formatie instructiesprong ${n}`})).concat([6,7,8,9,10].map(n=>({id:`b_form_${n}`,label:`Formatie ${n} (minimaal 3 deelnemers)`}))),
+      landingen5: Array.from({length:10},(_,i)=>({id:`landing5_${i+1}`,label:`5 meter landing #${i+1}`})),
+      algemene:[
+        {id:'50_sprongen',label:'50 vrijeval sprongen'},
+        {id:'30min_vrije_val',label:'30 minuten vrijeval tijd'},
+        {id:'uitrusting_check',label:'Eigen springuitrusting controleren op veiligheid'},
+        {id:'harnas',label:'Harnas beheersen'}
+      ],
+      canopy: Array.from({length:10},(_,i)=>({id:`b_canopy_${i+1}`,label:`Canopy Control ${i+1}`})),
+      bbr:[{id:'bbr_discipline',label:'BBR discipline (datum behaald)'}]
+    };
+
+    function makeChecklist(container, model, state){
+      container.innerHTML='';
+      const sections=[
+        ['Voorwaarde eisen', 'voorwaarden'],
+        ['Stabiliteitseisen', 'stabiliteit'],
+        ['15 meter landing', 'landingen15'],
+        ['Formatie instructiesprongen', 'formatie'],
+        ['Algemene eisen', 'algemene'],
+        ['Canopy Control', 'canopy']
+      ];
+      if(model===B_ITEMS){ sections.splice(2,1,['5 meter landing','landingen5']); sections.push(['BBR discipline eisen','bbr']); }
+
+      sections.forEach(([title,key])=>{
+        if(!model[key]) return;
+        const h = document.createElement('h4'); h.textContent=title; h.style.margin='12px 0 8px'; h.className='sub'; container.appendChild(h);
+        model[key].forEach(item=>{
+          const row=document.createElement('div'); row.className='checkRow';
+          const it = state[item.id]||{};
+          row.innerHTML = `
+            <div>${item.label}</div>
+            <input type="date" value="${it.date||''}" data-date="${item.id}" />
+            <input type="text" placeholder="sprong #" value="${it.jump||''}" data-jump="${item.id}" />
+            <input type="checkbox" ${it.done? 'checked':''} data-done="${item.id}" />`;
+          container.appendChild(row);
+        });
+      });
     }
 
-    function renderJumps(rows){
-      $('#jumpCount').textContent = `${rows.length} sprongen`;
-      const tb = $('#jumpTable tbody'); tb.innerHTML='';
-      rows.forEach((j,i)=>{
-        const w=j.weather||{}; const tr=document.createElement('tr');
-        tr.innerHTML = `<td>${rows.length-i}</td><td>${new Date(j.dt).toLocaleString()}</td><td>${j.type}</td><td>${j.dz}</td><td>${j.exit_alt}</td><td>${j.ff}</td><td>${w.wind?fmt(w.wind,0):'-'}/${w.gust?fmt(w.gust,0):'-'}</td><td>${wmoText(w.code||'-')}</td>`;
-        tb.appendChild(tr);
-      })
-    }
+    async function loadChecklist(license){ const user=await currentUser(); if(!user) return {}; const { data, error } = await supabase.from('checklists').select('*').eq('user_id',user.id).eq('license',license).single(); if(error && error.code!=='PGRST116'){ console.warn(error); } return data? (data.data||{}):{}; }
+    async function saveChecklist(license, data){ const user=await currentUser(); if(!user) throw new Error('Niet ingelogd'); const row={ user_id:user.id, license, data, updated_at:new Date().toISOString() }; const { error } = await supabase.from('checklists').upsert(row); if(error) throw error; }
 
-    function renderLeaderboard(rows){
-      const tb = $('#lbTable tbody'); tb.innerHTML='';
-      rows.forEach((r,i)=>{
-        const tr=document.createElement('tr');
-        tr.innerHTML = `<td>${i+1}</td><td>${r.username||'—'}</td><td>${r.jumps||0}</td><td>${r.xp||0}</td>`;
-        tb.appendChild(tr);
-      })
-    }
+    function collectChecklist(container){ const out={}; container.querySelectorAll('[data-date]').forEach(el=>{ const id=el.getAttribute('data-date'); out[id]=out[id]||{}; out[id].date=el.value||null; }); container.querySelectorAll('[data-jump]').forEach(el=>{ const id=el.getAttribute('data-jump'); out[id]=out[id]||{}; out[id].jump=el.value||null; }); container.querySelectorAll('[data-done]').forEach(el=>{ const id=el.getAttribute('data-done'); out[id]=out[id]||{}; out[id].done=el.checked; }); return out; }
 
-    async function refreshAll(){
-      const user = await supaUser(); if(!user){ showAuth(); return; }
-      $('#chipUser').textContent = `👤 ${user.email}`;
-      const profile = await loadProfile();
-      if(profile){
-        $('#pUsername').value = profile.username||''; $('#pDZ').value=profile.dz||''; $('#pApi').value=profile.api||''; $('#pLat').value=profile.lat||''; $('#pLon').value=profile.lon||'';
-        $('#jfDZ').value = profile.dz||''; $('#jfLat').value=profile.lat||''; $('#jfLon').value=profile.lon||''; $('#jfDate').value = nowLocalDatetime();
-        try{ const w=await fetchWeather(profile.lat,profile.lon,profile.api); lastWeather=w; renderWeather(profile,w);}catch(e){ $('#weatherData').innerHTML='<span class="sub">Weer niet beschikbaar</span>'; $('#safetyStatus').textContent='—'; }
-      }
-      const jumps = await fetchMyJumps(); renderJumps(jumps);
-      const lb = await fetchLeaderboard(); renderLeaderboard(lb);
-    }
+    function autoFillChecklistA(state, stats){ if(stats.jumps>=25){ state['25_sprongen']={...(state['25_sprongen']||{}), done:true}; } if(stats.freefall>=900){ state['15min_vrije_val']={...(state['15min_vrije_val']||{}), done:true}; } return state; }
+    function autoFillChecklistB(state, stats){ if(stats.jumps>=50){ state['50_sprongen']={...(state['50_sprongen']||{}), done:true}; } if(stats.freefall>=1800){ state['30min_vrije_val']={...(state['30min_vrije_val']||{}), done:true}; } return state; }
 
-    function showApp(){ $('#authSection').classList.add('hidden'); $('#app').classList.remove('hidden'); $('#topToolbar').hidden=false; }
-    function showAuth(){ $('#authSection').classList.remove('hidden'); $('#app').classList.add('hidden'); $('#topToolbar').hidden=true; }
+    // ===== APP STATE =====
+    let profile=null, lastWeather=null, aState={}, bState={};
 
-    // AUTH handlers
+    // ===== UI ACTIONS =====
     $('#btnRegister').onclick = async ()=>{
       const email=$('#regEmail').value.trim(); const pass=$('#regPass').value; const username=$('#regUsername').value.trim();
-      const dz=$('#regDZ').value.trim()||'Skydive Teuge'; const api=$('#regApi').value.trim(); const lat=parseFloat($('#regLat').value)||52.2375; const lon=parseFloat($('#regLon').value)||6.05;
-      $('#authMsg').textContent='';
+      if(!email || pass.length<6){ $('#authMsg').textContent='Vul e‑mail in en wachtwoord (min. 6).'; return; }
       const { data, error } = await supabase.auth.signUp({ email, password: pass });
-      if(error){ $('#authMsg').textContent = 'Fout: '+error.message; return; }
-      // profiel direct aanmaken
-      await saveProfile({ username, dz, api, lat, lon });
-      $('#authMsg').textContent='Account aangemaakt. Check eventueel je e‑mail (confirm). Log nu in.';
+      if(error){ $('#authMsg').textContent='Registratie fout: '+error.message; return; }
+      const user = await currentUser(); if(!user){ $('#authMsg').textContent='Check je mailbox voor bevestiging en log in.'; return; }
+      await supabase.from('profiles').insert({ id:user.id, username, dz:'Skydive Teuge', lat:52.2375, lon:6.05, api:null });
+      $('#authMsg').textContent='Account aangemaakt. Je kunt nu inloggen.';
     };
 
     $('#btnLogin').onclick = async ()=>{
       const email=$('#loginEmail').value.trim(); const pass=$('#loginPass').value;
       const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
-      if(error){ $('#authMsg').textContent = 'Login fout: '+error.message; return; }
-      showApp(); refreshAll();
+      if(error){ $('#authMsg').textContent='Login fout: '+error.message; return; }
+      showApp(); await refreshAll();
     };
 
     $('#btnLogout').onclick = async ()=>{ await supabase.auth.signOut(); showAuth(); };
 
-    // Profile save
     $('#btnSaveProfile').onclick = async ()=>{
-      const p={ username:$('#pUsername').value.trim(), dz:$('#pDZ').value.trim(), api:$('#pApi').value.trim(), lat:parseFloat($('#pLat').value), lon:parseFloat($('#pLon').value) };
-      try{ await saveProfile(p); alert('Profiel opgeslagen'); refreshAll(); }catch(e){ alert('Opslaan mislukt: '+e.message); }
+      const user=await currentUser(); if(!user) return;
+      const row={ id:user.id, username:$('#pUsername').value.trim(), dz:$('#pDZ').value.trim(), api:$('#pApi').value.trim()||null, lat:parseFloat($('#pLat').value)||52.2375, lon:parseFloat($('#pLon').value)||6.05 };
+      const { error } = await supabase.from('profiles').upsert(row); if(error){ alert('Opslaan mislukt: '+error.message); return; }
+      alert('Profiel opgeslagen'); await refreshAll();
     };
 
-    // Weather refresh
-    let lastWeather=null;
-    $('#btnRefreshWeather').onclick = async ()=>{
-      const p={ lat:parseFloat($('#pLat').value), lon:parseFloat($('#pLon').value), api:$('#pApi').value.trim() };
-      try{ const w=await fetchWeather(p.lat,p.lon,p.api); lastWeather=w; renderWeather(p,w);}catch(e){ alert('Weer ophalen mislukt'); }
-    };
+    $('#btnRefreshWeather').onclick = async ()=>{ if(!profile) return; try{ const w=await fetchWeather(profile.lat,profile.lon,profile.api); lastWeather=w; renderWeather(profile,w);}catch{ alert('Weer ophalen mislukt'); } };
+
+    // Locatie zoeken
+    let locTimer=null; $('#locSearch').addEventListener('input', ()=>{ clearTimeout(locTimer); const q=$('#locSearch').value.trim(); if(q.length<2){ $('#locList').classList.add('hidden'); $('#locList').innerHTML=''; return; } locTimer=setTimeout(async()=>{ try{ const res=await searchLocation(q); const ul=$('#locList'); ul.innerHTML = res.map(r=>`<li data-lat="${r.lat}" data-lon="${r.lon}">${r.name}</li>`).join(''); ul.classList.remove('hidden'); ul.querySelectorAll('li').forEach(li=> li.onclick=()=>{ $('#pLat').value = li.getAttribute('data-lat'); $('#pLon').value = li.getAttribute('data-lon'); $('#locSearch').value = li.textContent; ul.classList.add('hidden'); }); }catch(e){ console.warn(e); } }, 300); });
 
     // Jump form
-    $('#btnFormWeather').onclick = async ()=>{
-      const lat=parseFloat($('#jfLat').value), lon=parseFloat($('#jfLon').value); const api=$('#pApi').value.trim();
-      try{ const w=await fetchWeather(lat,lon,api); lastWeather=w; $('#formWeatherSnapshot').textContent = `Weer: ${fmt(w.wind,0)} km/u, gust ${fmt(w.gust,0)}, ${fmt((w.vis||0)/1000,1)} km zicht, ${fmt(w.cloud,0)}% bewolking, ${fmt(w.precipProb||0,0)}%/${fmt(w.precip||0,1)} mm, ${wmoText(w.code)}`; }catch{ $('#formWeatherSnapshot').textContent='Weer mislukt'; }
-    };
+    $('#btnFormWeather').onclick = async ()=>{ const lat=parseFloat($('#jfLat').value), lon=parseFloat($('#jfLon').value); try{ const w=await fetchWeather(lat,lon,($('#pApi').value||'').trim()); lastWeather=w; $('#formWeatherSnapshot').textContent = `Weer: ${fmt(w.wind,0)} km/u, gust ${fmt(w.gust,0)}, ${fmt((w.vis||0)/1000,1)} km zicht, ${fmt(w.cloud,0)}% bewolking, ${fmt(w.precipProb||0,0)}%/${fmt(w.precip||0,1)} mm, ${wmoText(w.code)}`; }catch{ $('#formWeatherSnapshot').textContent='Weer mislukt'; } };
+    $('#jumpForm').onsubmit = async (ev)=>{ ev.preventDefault(); const j={ date:new Date($('#jfDate').value).toISOString(), dz:$('#jfDZ').value.trim(), type:$('#jfType').value, exitAlt:parseInt($('#jfExit').value), openAlt:parseInt($('#jfOpen').value), ff:parseInt($('#jfFF').value), lat:parseFloat($('#jfLat').value), lon:parseFloat($('#jfLon').value), notes:$('#jfNotes').value.trim(), weather:lastWeather||null }; try{ await saveJump(j); $('#jfFF').value=''; $('#jfNotes').value=''; await refreshAll(); }catch(e){ alert('Opslaan mislukt: '+e.message+"\n\nWaarschijnlijk ontbreken Supabase tabellen. Zie de SQL onderaan deze file."); } };
 
-    $('#jumpForm').onsubmit = async (ev)=>{
-      ev.preventDefault();
-      const j={ date: new Date($('#jfDate').value).toISOString(), dz:$('#jfDZ').value.trim(), type:$('#jfType').value, exitAlt:parseInt($('#jfExit').value), openAlt:parseInt($('#jfOpen').value), ff:parseInt($('#jfFF').value), lat:parseFloat($('#jfLat').value), lon:parseFloat($('#jfLon').value), notes:$('#jfNotes').value.trim(), weather:lastWeather||null };
-      try{ await saveJump(j); $('#jfFF').value=''; $('#jfNotes').value=''; await refreshAll(); }catch(e){ alert('Opslaan mislukt: '+e.message); }
-    };
+    // Checklist save/auto
+    $('#btnSaveA').onclick = async ()=>{ const data=collectChecklist($('#checklistA')); try{ await saveChecklist('A', data); alert('A‑checklist opgeslagen'); }catch(e){ alert('Opslaan mislukt: '+e.message); } };
+    $('#btnSaveB').onclick = async ()=>{ const data=collectChecklist($('#checklistB')); try{ await saveChecklist('B', data); alert('B‑checklist opgeslagen'); }catch(e){ alert('Opslaan mislukt: '+e.message); } };
+    $('#btnAutoA').onclick = async ()=>{ const stats = await calcStats(); aState = autoFillChecklistA(aState, stats); makeChecklist($('#checklistA'), A_ITEMS, aState); };
+    $('#btnAutoB').onclick = async ()=>{ const stats = await calcStats(); bState = autoFillChecklistB(bState, stats); makeChecklist($('#checklistB'), B_ITEMS, bState); };
 
-    // Initialize
-    (async function init(){
-      const { data:{ user } } = await supabase.auth.getUser();
-      if(user){ showApp(); refreshAll(); } else { showAuth(); }
-      $('#jfDate').value = nowLocalDatetime();
-    })();
+    async function calcStats(){ const rows = await fetchMyJumps(); const freefall = rows.reduce((a,j)=>a+(j.ff||0),0); return { jumps: rows.length, freefall } }
+
+    // Render helpers
+    function showApp(){ $('#authSection').classList.add('hidden'); $('#app').classList.remove('hidden'); $('#topToolbar').hidden=false; }
+    function showAuth(){ $('#authSection').classList.remove('hidden'); $('#app').classList.add('hidden'); $('#topToolbar').hidden=true; }
+
+    async function refreshAll(){ const user=await currentUser(); if(!user){ showAuth(); return; } $('#chipUser').textContent=`👤 ${user.email}`; const prof = await ensureProfile(user); profile=prof; $('#pUsername').value=prof.username||''; $('#pDZ').value=prof.dz||''; $('#pApi').value=prof.api||''; $('#pLat').value=prof.lat||''; $('#pLon').value=prof.lon||''; $('#jfDZ').value=prof.dz||''; $('#jfLat').value=prof.lat||''; $('#jfLon').value=prof.lon||''; $('#jfDate').value=nowLocalDatetime(); try{ const w=await fetchWeather(prof.lat,prof.lon,prof.api); lastWeather=w; renderWeather(prof,w);}catch{ $('#weatherData').innerHTML='<span class="sub">Weer niet beschikbaar</span>'; $('#safetyStatus').textContent='—'; }
+      // jumps + leaderboard
+      try{ const jumps = await fetchMyJumps(); renderJumps(jumps);}catch(e){ console.warn(e); }
+      try{ const lb = await fetchLeaderboard(); renderLeaderboard(lb);}catch(e){ console.warn(e); }
+      // checklists
+      try{ aState = await loadChecklist('A'); makeChecklist($('#checklistA'), A_ITEMS, aState);}catch(e){ console.warn(e); }
+      try{ bState = await loadChecklist('B'); makeChecklist($('#checklistB'), B_ITEMS, bState);}catch(e){ console.warn(e); }
+    }
+
+    // INIT
+    (async function init(){ const { data:{ user } } = await supabase.auth.getUser(); if(user){ showApp(); } else { showAuth(); } $('#jfDate').value = nowLocalDatetime(); await refreshAll(); })();
+
   })();
   </script>
+
+  <!--
+  =======================
+  SUPABASE SQL — voer dit 1x uit in SQL Editor
+  =======================
+
+  -- Profielen (1:1 met auth.users)
+  create table if not exists public.profiles (
+    id uuid primary key references auth.users(id) on delete cascade,
+    username text unique,
+    dz text default 'Skydive Teuge',
+    lat double precision default 52.2375,
+    lon double precision default 6.05,
+    api text,
+    created_at timestamptz default now()
+  );
+
+  -- Sprongen
+  create table if not exists public.jumps (
+    id bigserial primary key,
+    user_id uuid not null references auth.users(id) on delete cascade,
+    dt timestamptz not null,
+    dz text not null,
+    type text not null,
+    exit_alt int not null,
+    open_alt int not null,
+    ff int not null,
+    lat double precision,
+    lon double precision,
+    notes text,
+    weather jsonb,
+    created_at timestamptz default now()
+  );
+
+  -- XP functie + Leaderboard view
+  create or replace function public.jump_xp(exit_alt int, ff int, type text)
+  returns int language sql immutable as $$
+    select 120
+         + least(80, greatest(0, exit_alt)/100)::int
+         + case when ff > 45 then 20 else 0 end
+         + case when coalesce(type,'') <> 'Tandem' then 20 else 0 end
+  $$;
+
+  create or replace view public.leaderboard as
+    select p.username,
+           count(j.id)::int as jumps,
+           coalesce(sum(public.jump_xp(j.exit_alt, j.ff, j.type)),0)::int as xp
+    from public.profiles p
+    left join public.jumps j on j.user_id = p.id
+    group by p.id, p.username
+    order by xp desc, jumps desc, username asc;
+
+  -- Checklists (JSON per licentie per user)
+  create table if not exists public.checklists (
+    user_id uuid not null references auth.users(id) on delete cascade,
+    license text not null check (license in ('A','B')),
+    data jsonb not null default '{}'::jsonb,
+    updated_at timestamptz default now(),
+    primary key (user_id, license)
+  );
+
+  -- RLS aan
+  alter table public.profiles enable row level security;
+  alter table public.jumps enable row level security;
+  alter table public.checklists enable row level security;
+
+  -- Policies (eigen data)
+  create policy if not exists "profiles_self_select" on public.profiles for select using (auth.uid() = id);
+  create policy if not exists "profiles_self_upsert" on public.profiles for insert with check (auth.uid() = id);
+  create policy if not exists "profiles_self_update" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
+
+  create policy if not exists "jumps_own_select" on public.jumps for select using (auth.uid() = user_id);
+  create policy if not exists "jumps_own_insert" on public.jumps for insert with check (auth.uid() = user_id);
+  create policy if not exists "jumps_own_update_delete" on public.jumps for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+  create policy if not exists "checklists_own_select" on public.checklists for select using (auth.uid() = user_id);
+  create policy if not exists "checklists_own_upsert" on public.checklists for insert with check (auth.uid() = user_id);
+  create policy if not exists "checklists_own_update" on public.checklists for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+  -- Leaderboard publiek leesbaar
+  grant usage on schema public to anon, authenticated;
+  grant select on public.leaderboard to anon, authenticated;
+  -->
 </body>
 </html>
