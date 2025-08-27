@@ -1,9 +1,9 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="nl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Skydive Tracker v4 — Cloud + Geocoding + Checklists</title>
+  <title>Skydive Tracker v5 — Tabs • Mooie Checklists • Tools</title>
   <style>
     :root{
       --bg:#0b1220;--panel:#121a2b;--panel-2:#0f1626;--text:#ebf4ff;--muted:#9fb3d0;--primary:#4cc9f0;--primary-2:#4895ef;--accent:#f72585;--good:#2dd4bf;--warn:#fbbf24;--bad:#ef4444;--ok:#22c55e;--chip:#1f2940;--shadow:0 10px 30px rgba(0,0,0,.35);--radius:16px;
@@ -11,7 +11,7 @@
     *{box-sizing:border-box} html,body{height:100%}
     body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,Ubuntu,"Apple Color Emoji","Segoe UI Emoji";background:linear-gradient(135deg,#0b1220 0%,#0d1730 45%, #0a1230 100%);color:var(--text)}
     a{color:var(--primary)}
-    header{position:sticky;top:0;z-index:4;backdrop-filter:saturate(1.1) blur(10px);background:linear-gradient(180deg,rgba(10,18,40,.9),rgba(10,18,40,.6));border-bottom:1px solid rgba(255,255,255,.06)}
+    header{position:sticky;top:0;z-index:5;backdrop-filter:saturate(1.1) blur(10px);background:linear-gradient(180deg,rgba(10,18,40,.9),rgba(10,18,40,.6));border-bottom:1px solid rgba(255,255,255,.06)}
     .bar{max-width:1200px;margin:0 auto;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 18px}
     .brand{display:flex;gap:12px;align-items:center;font-weight:800;letter-spacing:.4px}
     .logo{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 30% 30%, #4cc9f0, #4895ef 60%, #f72585 100%);box-shadow:var(--shadow)}
@@ -23,40 +23,59 @@
     .btn.warn{background:var(--warn);color:#1b1300}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--text)}
     .chip{background:var(--chip);border:1px solid rgba(255,255,255,.08);padding:6px 10px;border-radius:999px;color:var(--muted);font-weight:600;display:inline-flex;gap:8px;align-items:center}
-    main{max-width:1200px;margin:24px auto;padding:0 18px;display:grid;grid-template-columns:340px 1fr 380px;gap:16px}
-    @media (max-width:1100px){main{grid-template-columns:1fr;}}
+
+    nav.tabs{max-width:1200px;margin:12px auto 0;padding:0 18px;display:flex;gap:8px;flex-wrap:wrap}
+    .tab{padding:10px 14px;border-radius:999px;background:#0b1324;border:1px solid rgba(255,255,255,.12);color:var(--muted);cursor:pointer}
+    .tab.active{background:linear-gradient(180deg,var(--panel),var(--panel-2));color:var(--text)}
+
+    main{max-width:1200px;margin:14px auto 40px;padding:0 18px}
+    .section{display:none}
+    .section.active{display:block}
+
+    .grid{display:grid;gap:16px}
+    .grid.cols-2{grid-template-columns:1fr 1fr}
+    .grid.cols-3{grid-template-columns:1fr 1fr 1fr}
+    @media (max-width:1000px){.grid.cols-2,.grid.cols-3{grid-template-columns:1fr}}
+
     .card{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid rgba(255,255,255,.08);box-shadow:var(--shadow);border-radius:var(--radius);padding:16px}
-    .card h3{margin:0 0 10px 0;font-size:18px}
+    .card h3{margin:0 0 12px;font-size:18px}
     .sub{color:var(--muted);font-size:13px}
     label{display:block;font-size:13px;color:var(--muted);margin:10px 0 6px}
     input,select,textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:#0b1324;color:var(--text)}
     textarea{min-height:70px}
-    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-    .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
     table{width:100%;border-collapse:collapse}
     th,td{padding:10px 8px;text-align:left;border-bottom:1px dashed rgba(255,255,255,.08);font-size:13px}
     th{color:var(--muted);font-weight:700}
     tr:hover td{background:rgba(255,255,255,.03)}
+
     .pill{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:#0b1324;font-size:12px;color:var(--muted)}
     .status{display:inline-flex;gap:8px;align-items:center;font-weight:800}
     .status.go{color:var(--ok)}.status.caution{color:var(--warn)}.status.hold{color:var(--bad)}
-    .hidden{display:none}
-    .suggest{position:relative}
-    .suggest ul{position:absolute;z-index:5;left:0;right:0;margin:6px 0 0;padding:6px;background:#0b1324;border:1px solid rgba(255,255,255,.12);border-radius:12px;list-style:none}
-    .suggest li{padding:8px;border-radius:10px;cursor:pointer}
-    .suggest li:hover{background:rgba(255,255,255,.06)}
-    .checkRow{display:grid;grid-template-columns:1fr 120px 120px 30px;gap:8px;align-items:center;margin-bottom:6px}
-    .checkRow input[type="checkbox"]{width:18px;height:18px}
+
+    .progress{height:10px;background:#0b1324;border:1px solid rgba(255,255,255,.12);border-radius:999px;overflow:hidden}
+    .progress>span{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0%}
+
+    .checklist{display:grid;gap:10px}
+    .cl-section{background:#0c162b;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px}
+    .cl-header{display:flex;justify-content:space-between;align-items:center}
+    .cl-items{display:grid;gap:8px;margin-top:8px}
+    .cl-item{display:flex;align-items:center;gap:10px;background:#0b1324;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px}
+    .cl-item input[type="checkbox"]{width:18px;height:18px}
+    .cl-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+    .tools{display:grid;gap:12px}
+    .bignum{font-size:36px;font-weight:900;letter-spacing:1px}
   </style>
 
-  <!-- Supabase client -->
+  <!-- Supabase client & Chart.js -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script>
-    // VUL DIT IN met jouw Supabase project gegevens
+    // VUL IN met jouw Supabase project gegevens
     const SUPABASE_URL = "https://jptgghxniqqoyxxxgcmy.supabase.co"; // <-- aanpassen
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwdGdnaHhuaXFxb3l4eHhnY215Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxOTQwMTIsImV4cCI6MjA3MTc3MDAxMn0.KugjNF2p0hlHguXuedEU63GzLbRRYcc2kfF_4Ul6CRk";           // <-- aanpassen
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = window.supabase?.createClient?.(SUPABASE_URL, SUPABASE_ANON_KEY);
   </script>
 </head>
 <body>
@@ -65,8 +84,8 @@
       <div class="brand">
         <div class="logo"><span>🪂</span></div>
         <div>
-          <div>Skydive Tracker <span class="pill">v4 cloud</span></div>
-          <div class="sub">Locatie zoeken • Betere login • Checklists A/B • Publiek leaderboard</div>
+          <div>Skydive Tracker <span class="pill">v5</span></div>
+          <div class="sub">Tabs • Mooie checklists • Veiligheid per sprongcount • Tools</div>
         </div>
       </div>
       <div class="toolbar" id="topToolbar" hidden>
@@ -74,407 +93,416 @@
         <button class="btn warn" id="btnLogout">Log uit</button>
       </div>
     </div>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="weer">Weer</button>
+      <button class="tab" data-tab="sprongen">Sprongen</button>
+      <button class="tab" data-tab="checklists">Checklists</button>
+      <button class="tab" data-tab="profiel">Profiel</button>
+      <button class="tab" data-tab="stats">Statistieken</button>
+    </nav>
   </header>
 
   <!-- AUTH -->
-  <section id="authSection" class="card" style="max-width:920px;margin:30px auto;">
-    <h3>Inloggen of Account maken</h3>
-    <div class="grid-2">
-      <div>
-        <div class="sub">Inloggen (e‑mail & wachtwoord)</div>
+  <section id="auth" class="section active" style="max-width:920px;margin:24px auto;padding:0 18px">
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Inloggen</h3>
         <label>E‑mail</label>
         <input id="loginEmail" placeholder="jij@example.com" />
         <label>Wachtwoord</label>
         <input id="loginPass" type="password" placeholder="••••••" />
         <button class="btn" id="btnLogin" style="margin-top:10px">Inloggen</button>
-        <div class="sub" style="margin-top:8px">Tip: Gebruik <b>e‑mail</b> als login. Je naam op het leaderboard stel je in bij je profiel.</div>
+        <div class="sub" id="authMsgLogin" style="margin-top:8px"></div>
       </div>
-      <div>
-        <div class="sub">Registreren (maakt ook je profiel aan)</div>
+      <div class="card">
+        <h3>Account aanmaken</h3>
         <label>E‑mail</label>
         <input id="regEmail" placeholder="jij@example.com" />
         <label>Wachtwoord</label>
         <input id="regPass" type="password" placeholder="min. 6 karakters" />
-        <label>Publieke gebruikersnaam (voor leaderboard)</label>
+        <label>Publieke gebruikersnaam (leaderboard)</label>
         <input id="regUsername" placeholder="bijv. thijs" />
         <button class="btn" id="btnRegister" style="margin-top:10px">Account aanmaken</button>
+        <div class="sub" id="authMsgReg" style="margin-top:8px"></div>
       </div>
     </div>
-    <div id="authMsg" class="sub" style="margin-top:12px"></div>
   </section>
 
-  <main id="app" class="hidden">
-    <!-- PROFIEL & LOCATIE -->
-    <div class="card">
-      <h3>Profiel & Locatie</h3>
-      <div class="grid-3">
-        <div><label>Gebruikersnaam (leaderboard)</label><input id="pUsername" /></div>
-        <div><label>Dropzone naam</label><input id="pDZ" value="Skydive Teuge" /></div>
-        <div><label>Open‑Meteo URL (optioneel)</label><input id="pApi" placeholder="Laat leeg om automatisch te gebruiken" /></div>
-      </div>
-      <div class="grid-3">
-        <div class="suggest">
-          <label>Locatie zoeken (stad, DZ, berg…)</label>
-          <input id="locSearch" placeholder="bijv. Teuge, Rotterdam, Amersfoort" />
-          <ul id="locList" class="hidden"></ul>
+  <main id="app" class="section" style="display:none">
+    <!-- WEER TAB -->
+    <section id="tab-weer" class="section active">
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Live Weer & Veiligheidscheck</h3>
+          <div class="sub" id="weatherNote">Gebaseerd op je profielcoördinaten</div>
+          <div id="weatherData" style="margin-top:8px">—</div>
+          <div id="safetyStatus" style="margin-top:8px" class="status">—</div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn secondary" id="btnRefreshWeather">Ververs weer</button>
+            <button class="btn" id="btnJumpWindows">Toon Jump Windows (24h)</button>
+          </div>
+          <div id="jumpWindows" class="sub" style="margin-top:8px"></div>
         </div>
-        <div><label>Lat</label><input id="pLat" type="number" step="0.0001" /></div>
-        <div><label>Lon</label><input id="pLon" type="number" step="0.0001" /></div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn" id="btnSaveProfile">Opslaan</button>
-        <button class="btn secondary" id="btnRefreshWeather">Ververs weer</button>
-      </div>
-      <div class="sub" style="margin-top:8px">Locatie zoeken gebruikt de <b>Open‑Meteo Geocoding API</b> (gratis, geen key).</div>
-    </div>
-
-    <!-- WEER -->
-    <div class="card">
-      <h3>Live Weer & Veiligheidscheck</h3>
-      <div class="sub" id="weatherNote">Gebaseerd op je coördinaten</div>
-      <div id="weatherData" style="margin-top:8px">—</div>
-      <div id="safetyStatus" style="margin-top:8px" class="status">—</div>
-    </div>
-
-    <!-- SPRONG LOG -->
-    <div class="card">
-      <h3>Sprong loggen</h3>
-      <form id="jumpForm">
-        <div class="grid-3">
-          <div>
-            <label>Datum & tijd</label>
-            <input id="jfDate" type="datetime-local" required />
-          </div>
-          <div>
-            <label>Dropzone</label>
-            <input id="jfDZ" required />
-          </div>
-          <div>
-            <label>Type</label>
-            <select id="jfType">
-              <option>Solo</option><option>Tandem</option><option>AFF</option><option>RW</option><option>Freefly</option><option>Wingsuit</option><option>Canopy</option><option>Coach</option>
-            </select>
+        <div class="card">
+          <h3>Tools</h3>
+          <div class="tools">
+            <div>
+              <div class="sub">Crosswind checker</div>
+              <div class="grid cols-3">
+                <div><label>Runway heading (°)</label><input id="rwHeading" type="number" min="0" max="359" value="90" /></div>
+                <div><label>Windrichting (°)</label><input id="windDir" type="number" min="0" max="359" /></div>
+                <div><label>Windsnelheid (km/u)</label><input id="windSpd" type="number" step="1" /></div>
+              </div>
+              <div style="margin-top:8px" id="crosswindOut" class="sub">—</div>
+              <button class="btn" id="btnCross">Bereken</button>
+            </div>
+            <hr style="border:0;border-top:1px dashed rgba(255,255,255,.12)">
+            <div>
+              <div class="sub">Exit‑separation timer</div>
+              <div class="grid cols-3">
+                <div><label>Separation (s)</label><input id="sepSec" type="number" value="8" /></div>
+                <div><label>Herhalingen</label><input id="sepRepeats" type="number" value="6" /></div>
+                <div style="display:flex;align-items:flex-end"><button class="btn" id="btnSepStart">Start</button></div>
+              </div>
+              <div class="bignum" id="sepDisplay">00</div>
+            </div>
           </div>
         </div>
-        <div class="grid-3">
-          <div><label>Exit (m)</label><input id="jfExit" type="number" step="10" required /></div>
-          <div><label>Open (m)</label><input id="jfOpen" type="number" step="10" required /></div>
-          <div><label>Vrije val (s)</label><input id="jfFF" type="number" step="1" required /></div>
+      </div>
+    </section>
+
+    <!-- SPRONGEN TAB -->
+    <section id="tab-sprongen" class="section">
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Sprong loggen</h3>
+          <form id="jumpForm">
+            <div class="grid cols-3">
+              <div>
+                <label>Datum & tijd</label>
+                <input id="jfDate" type="datetime-local" required />
+              </div>
+              <div>
+                <label>Dropzone</label>
+                <input id="jfDZ" required />
+              </div>
+              <div>
+                <label>Type</label>
+                <select id="jfType">
+                  <option>Solo</option><option>Tandem</option><option>AFF</option><option>RW</option><option>Freefly</option><option>Wingsuit</option><option>Canopy</option><option>Coach</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid cols-3">
+              <div><label>Exit (m)</label><input id="jfExit" type="number" step="10" required /></div>
+              <div><label>Open (m)</label><input id="jfOpen" type="number" step="10" required /></div>
+              <div><label>Vrije val (s)</label><input id="jfFF" type="number" step="1" required /></div>
+            </div>
+            <div class="grid cols-3">
+              <div><label>Lat</label><input id="jfLat" type="number" step="0.0001" required /></div>
+              <div><label>Lon</label><input id="jfLon" type="number" step="0.0001" required /></div>
+              <div style="display:flex;align-items:flex-end;gap:8px">
+                <button type="button" class="btn secondary" id="btnFormWeather">Weer snapshot</button>
+                <button class="btn" type="submit">Opslaan</button>
+              </div>
+            </div>
+            <label>Notities</label>
+            <textarea id="jfNotes" placeholder="line‑up, spot, exit, canopy pattern, landing…"></textarea>
+            <div id="formWeatherSnapshot" class="sub">—</div>
+          </form>
         </div>
-        <div class="grid-3">
-          <div><label>Lat</label><input id="jfLat" type="number" step="0.0001" required /></div>
-          <div><label>Lon</label><input id="jfLon" type="number" step="0.0001" required /></div>
-          <div style="display:flex;align-items:flex-end;gap:8px">
-            <button type="button" class="btn secondary" id="btnFormWeather">Weer snapshot</button>
-            <button class="btn" type="submit">Opslaan</button>
+        <div class="card">
+          <h3>Jouw sprongen</h3>
+          <div class="sub" id="jumpCount">—</div>
+          <div style="overflow:auto;margin-top:6px">
+            <table id="jumpTable">
+              <thead><tr><th>#</th><th>Datum</th><th>Type</th><th>DZ</th><th>Exit</th><th>FF</th><th>Wind</th><th>Weer</th></tr></thead>
+              <tbody></tbody>
+            </table>
           </div>
         </div>
-        <label>Notities</label>
-        <textarea id="jfNotes" placeholder="line‑up, spot, exit, canopy pattern, landing…"></textarea>
-        <div id="formWeatherSnapshot" class="sub">—</div>
-      </form>
-      <div class="sub" style="margin-top:8px">Krijg je de fout <i>Could not find the table 'public.jumps' in the schema cache</i>? Dan zijn je Supabase tabellen nog niet aangemaakt — zie de SQL onderaan deze file.</div>
-    </div>
-
-    <!-- TABEL SPRONGEN -->
-    <div class="card">
-      <h3>Jouw sprongen</h3>
-      <div class="sub" id="jumpCount">—</div>
-      <div style="overflow:auto;margin-top:6px">
-        <table id="jumpTable">
-          <thead><tr><th>#</th><th>Datum</th><th>Type</th><th>DZ</th><th>Exit</th><th>FF</th><th>Wind</th><th>Weer</th></tr></thead>
-          <tbody></tbody>
-        </table>
       </div>
-    </div>
+    </section>
 
-    <!-- CHECKLISTS A/B -->
-    <div class="card">
-      <h3>Checklist A‑licentie</h3>
-      <div id="checklistA"></div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn" id="btnSaveA">Opslaan A‑checklist</button>
-        <button class="btn secondary" id="btnAutoA">Auto‑invullen (op basis van stats)</button>
+    <!-- CHECKLISTS TAB -->
+    <section id="tab-checklists" class="section">
+      <div class="card">
+        <h3>Checklists A‑ en B‑licentie</h3>
+        <div class="sub">Klik items af; progressie per sectie. Geen "voorwaarden" meer; focust op skills.</div>
+        <div class="checklist" id="clContainer"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn" id="btnSaveChecklists">Opslaan</button>
+          <button class="btn secondary" id="btnAutoFill">Auto‑invullen (op basis van sprongcount)</button>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card">
-      <h3>Checklist B‑licentie</h3>
-      <div id="checklistB"></div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn" id="btnSaveB">Opslaan B‑checklist</button>
-        <button class="btn secondary" id="btnAutoB">Auto‑invullen (op basis van stats)</button>
+    <!-- PROFIEL TAB -->
+    <section id="tab-profiel" class="section">
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Profiel</h3>
+          <label>Gebruikersnaam (leaderboard)</label>
+          <input id="pUsername" />
+          <label>Dropzone naam</label>
+          <input id="pDZ" value="Skydive Teuge" />
+          <label>Open‑Meteo URL (optioneel)</label>
+          <input id="pApi" placeholder="Laat leeg om automatisch te gebruiken" />
+          <div class="grid cols-3">
+            <div class="suggest">
+              <label>Locatie zoeken</label>
+              <input id="locSearch" placeholder="bv. Teuge, Texel, Rotterdam" />
+              <ul id="locList" style="position:absolute;z-index:5;left:0;right:0;margin:6px 0 0;padding:6px;background:#0b1324;border:1px solid rgba(255,255,255,.12);border-radius:12px;list-style:none;display:none"></ul>
+            </div>
+            <div><label>Lat</label><input id="pLat" type="number" step="0.0001" /></div>
+            <div><label>Lon</label><input id="pLon" type="number" step="0.0001" /></div>
+          </div>
+          <label>Dropzone preset</label>
+          <select id="dzPreset">
+            <option value="">— Kies een preset —</option>
+            <option value="Skydive Teuge|52.2375|6.05">Skydive Teuge (NL)</option>
+            <option value="Paracentrum Texel|53.117|4.776">Paracentrum Texel (NL)</option>
+            <option value="Midden‑Zeeland|51.512|3.731">Midden‑Zeeland (NL)</option>
+            <option value="Hoogeveen|52.73|6.52">Hoogeveen (NL)</option>
+            <option value="Skydive Spa|50.483|5.908">Skydive Spa (BE)</option>
+          </select>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="btn" id="btnSaveProfile">Opslaan</button>
+            <button class="btn secondary" id="btnRefreshWeather2">Ververs weer</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Account</h3>
+          <div class="sub">Ingelogd als <span id="accEmail">—</span></div>
+          <button class="btn warn" id="btnLogout2" style="margin-top:10px">Log uit</button>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <!-- LEADERBOARD -->
-    <div class="card">
-      <h3>Publiek Leaderboard</h3>
-      <div class="sub">Iedereen kan dit zien (alleen lezen)</div>
-      <table id="lbTable" style="margin-top:6px">
-        <thead><tr><th>#</th><th>Gebruiker</th><th>Sprongen</th><th>XP</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
+    <!-- STATS TAB -->
+    <section id="tab-stats" class="section">
+      <div class="grid cols-2">
+        <div class="card">
+          <h3>Sprongen per maand</h3>
+          <canvas id="chartMonthly" height="210"></canvas>
+        </div>
+        <div class="card">
+          <h3>Sprongtypes</h3>
+          <canvas id="chartTypes" height="210"></canvas>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script>
-  (function(){
-    // ===== CONFIG =====
+  (async function(){
+    // ===== Guard: Supabase client aanwezig? =====
+    if(!supabase){ alert('Supabase client niet gevonden. Vul SUPABASE_URL en SUPABASE_ANON_KEY in, en controleer de <script> tag.'); }
+
+    // ===== Config en helpers =====
     const DEFAULT_TZ = 'Europe/Amsterdam';
     const HOURLY = [ 'temperature_2m','relative_humidity_2m','wind_speed_10m','wind_gusts_10m','apparent_temperature','wind_direction_10m','precipitation_probability','precipitation','weather_code','cloud_cover','visibility' ].join(',');
-
-    // ===== DOM HELPERS =====
-    const $ = s => document.querySelector(s);
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
     const fmt = (n,d=0)=> Number(n??0).toFixed(d);
+
     function nowLocalDatetime(){ const dt=new Date(); dt.setMinutes(dt.getMinutes()-dt.getTimezoneOffset()); return dt.toISOString().slice(0,16); }
 
-    // ===== WMO MAP & SAFETY =====
     function wmoText(code){const map={0:'Kraakhelder',1:'Overwegend helder',2:'Deels bewolkt',3:'Bewolkt',45:'Mist',48:'Rijpmist',51:'Motregen licht',53:'Motregen',55:'Motregen zwaar',56:'IJzel licht',57:'IJzel',61:'Regen licht',63:'Regen',65:'Regen zwaar',66:'IJzel regen licht',67:'IJzel regen',71:'Sneeuw licht',73:'Sneeuw',75:'Sneeuw zwaar',77:'Sneeuwkorrels',80:'Buien licht',81:'Buien',82:'Buien zwaar',85:'Sneeuwbuien licht',86:'Sneeuwbuien',95:'Onweer',96:'Onweer + hagel',99:'Hevig onweer'}; return map[code]||`Code ${code}`;}
-    function evalSafety(level, w){ const wind=+w.wind||0,gust=+w.gust||0,cloud=+w.cloud||0,vis=+w.vis||0,p=+w.precipProb||0,r=+w.precip||0; const limit=level<3?22:32,gustLimit=limit+10; const bad=[ wind>limit?`Wind ${fmt(wind)}>${limit}`:null, gust>gustLimit?`Gust ${fmt(gust)}>${gustLimit}`:null, cloud>60?`Bewolking ${fmt(cloud)}%>60%`:null, vis<5000?`Zicht ${fmt(vis/1000,1)}km<5km`:null, !(p<=20 && r<=0.1)?`Neerslag ${fmt(p)}%/${fmt(r,1)}mm`:null ].filter(Boolean); let status='go',label='GO'; if(bad.length===1){status='caution';label='CAUTION';} if(bad.length>=2){status='hold';label='HOLD';} return {status,label,reasons:bad}; }
 
-    // ===== SUPABASE HELPERS =====
-    async function currentUser(){ const { data:{ user } } = await supabase.auth.getUser(); return user; }
-    async function ensureProfile(user){ const { data, error } = await supabase.from('profiles').select('*').eq('id',user.id).single(); if(error && error.code!=='PGRST116'){ console.warn(error); } if(!data){ await supabase.from('profiles').insert({ id:user.id, username:'', dz:'Skydive Teuge', lat:52.2375, lon:6.05, api:null }); return { username:'', dz:'Skydive Teuge', lat:52.2375, lon:6.05, api:null }; } return data; }
+    function levelFromJumps(j){ if(j<25) return 'beginner'; if(j<50) return 'novice'; return 'sport'; }
+    function limitsFromJumps(j){
+      const lvl = levelFromJumps(j);
+      if(lvl==='beginner') return { wind:22, gust:32, cloud:60, vis:5000, pprob:20, precip:0.1 };
+      if(lvl==='novice')   return { wind:28, gust:38, cloud:60, vis:5000, pprob:20, precip:0.1 };
+      return { wind:32, gust:42, cloud:60, vis:5000, pprob:20, precip:0.1 };
+    }
 
-    // ===== GEO API (Open‑Meteo Geocoding, geen key nodig) =====
-    async function searchLocation(q){ const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=nl&format=json`; const r=await fetch(url); if(!r.ok) throw new Error('Geocoding mislukt'); const j=await r.json(); return (j.results||[]).map(x=>({ name:`${x.name}${x.admin1? ', '+x.admin1:''}${x.country? ', '+x.country:''}`, lat:x.latitude, lon:x.longitude })); }
+    function evalSafety(jumps, w){
+      const lim = limitsFromJumps(jumps);
+      const bad = [];
+      if((+w.wind||0) > lim.wind) bad.push(`Wind ${fmt(w.wind)}>${lim.wind}`);
+      if((+w.gust||0) > lim.gust) bad.push(`Gust ${fmt(w.gust)}>${lim.gust}`);
+      if((+w.cloud||0) > lim.cloud) bad.push(`Bewolking ${fmt(w.cloud)}%>${lim.cloud}%`);
+      if((+w.vis||0) < lim.vis) bad.push(`Zicht ${fmt((w.vis||0)/1000,1)}km<${fmt(lim.vis/1000,0)}km`);
+      if(!(((+w.precipProb||0)<=lim.pprob) && ((+w.precip||0)<=lim.precip))) bad.push(`Neerslag ${fmt(w.precipProb)}%/${fmt(w.precip,1)}mm`);
+      let status='go',label='GO';
+      if(bad.length===1) { status='caution'; label='CAUTION'; }
+      if(bad.length>=2){ status='hold'; label='HOLD'; }
+      return {status,label,reasons:bad};
+    }
 
-    // ===== WEATHER =====
-    async function fetchWeather(lat,lon,api){ let url = api && api.trim()? api.trim() : `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${HOURLY}&timezone=${encodeURIComponent(DEFAULT_TZ)}`; try{ const u=new URL(url); u.searchParams.set('latitude',lat); u.searchParams.set('longitude',lon); if(!u.searchParams.has('hourly')) u.searchParams.set('hourly',HOURLY); if(!u.searchParams.has('timezone')) u.searchParams.set('timezone',DEFAULT_TZ); url=u.toString(); }catch{} const r=await fetch(url); if(!r.ok) throw new Error('Weer mislukt'); const j=await r.json(); const i=nearestHourIndex(j.hourly.time); return { time:j.hourly.time[i], temp:j.hourly.temperature_2m?.[i], rh:j.hourly.relative_humidity_2m?.[i], wind:j.hourly.wind_speed_10m?.[i], gust:j.hourly.wind_gusts_10m?.[i], app:j.hourly.apparent_temperature?.[i], dir:j.hourly.wind_direction_10m?.[i], precipProb:j.hourly.precipitation_probability?.[i], precip:j.hourly.precipitation?.[i], code:j.hourly.weather_code?.[i], cloud:j.hourly.cloud_cover?.[i], vis:j.hourly.visibility?.[i] }; }
+    // ===== Supabase helpers =====
+    async function supaUser(){ const { data:{ user } } = await supabase.auth.getUser(); return user; }
+    async function ensureProfile(user){ const { data, error } = await supabase.from('profiles').select('*').eq('id',user.id).single(); if(error && error.code!=='PGRST116'){ console.warn(error); } if(!data){ await supabase.from('profiles').insert({ id:user.id, username:'', dz:'Skydive Teuge', lat:52.2375, lon:6.05, api:null }); return { id:user.id, username:'', dz:'Skydive Teuge', lat:52.2375, lon:6.05, api:null }; } return data; }
+
+    // ===== Geocoding (Open‑Meteo) =====
+    async function searchLocation(q){ const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=nl&format=json`); if(!r.ok) throw new Error('Geocoding mislukt'); const j=await r.json(); return (j.results||[]).map(x=>({ name:`${x.name}${x.admin1? ', '+x.admin1:''}${x.country? ', '+x.country:''}`, lat:x.latitude, lon:x.longitude })); }
+
+    // ===== Weather =====
+    async function fetchWeather(lat,lon,api){ let url = api && api.trim()? api.trim() : `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=${HOURLY}&timezone=${encodeURIComponent(DEFAULT_TZ)}`; try{ const u=new URL(url); u.searchParams.set('latitude',lat); u.searchParams.set('longitude',lon); if(!u.searchParams.has('hourly')) u.searchParams.set('hourly',HOURLY); if(!u.searchParams.has('timezone')) u.searchParams.set('timezone',DEFAULT_TZ); url=u.toString(); }catch{} const r=await fetch(url); if(!r.ok) throw new Error('Weer mislukt'); const j=await r.json(); const i=nearestHourIndex(j.hourly.time); return { raw:j, idx:i, time:j.hourly.time[i], temp:j.hourly.temperature_2m?.[i], rh:j.hourly.relative_humidity_2m?.[i], wind:j.hourly.wind_speed_10m?.[i], gust:j.hourly.wind_gusts_10m?.[i], app:j.hourly.apparent_temperature?.[i], dir:j.hourly.wind_direction_10m?.[i], precipProb:j.hourly.precipitation_probability?.[i], precip:j.hourly.precipitation?.[i], code:j.hourly.weather_code?.[i], cloud:j.hourly.cloud_cover?.[i], vis:j.hourly.visibility?.[i] };
+    }
     function nearestHourIndex(arr){ const now=Date.now(); let best=0,d=1/0; arr.forEach((t,i)=>{const dt=Math.abs(new Date(t)-now); if(dt<d){d=dt;best=i}}); return best; }
 
-    function renderWeather(profile,w){ const level=1; const s=evalSafety(level,w); $('#weatherData').innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap"><span class=pill>🕒 ${new Date(w.time).toLocaleString()}</span><span class=pill>🌡️ ${fmt(w.temp,1)}°C (gevoel ${fmt(w.app,1)}°)</span><span class=pill>💨 ${fmt(w.wind,0)} km/u, gust ${fmt(w.gust,0)}</span><span class=pill>☁️ ${fmt(w.cloud,0)}%</span><span class=pill>👁️ ${fmt((w.vis||0)/1000,1)} km</span><span class=pill>🌧️ ${fmt(w.precipProb||0,0)}% / ${fmt(w.precip||0,1)} mm</span><span class=pill>${wmoText(w.code)}</span></div>`; const el=$('#safetyStatus'); el.className=`status ${s.status}`; const icon=s.status==='go'?'✅':s.status==='caution'?'⚠️':'⛔'; el.textContent=`${icon} ${s.label}${s.reasons.length? ' — '+s.reasons.join(' · '): ''}`; }
+    function renderWeather(jumpsCount,w){ const s=evalSafety(jumpsCount,w); $('#weatherData').innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap"><span class=pill>🕒 ${new Date(w.time).toLocaleString()}</span><span class=pill>🌡️ ${fmt(w.temp,1)}°C (gevoel ${fmt(w.app,1)}°)</span><span class=pill>💨 ${fmt(w.wind,0)} km/u, gust ${fmt(w.gust,0)}</span><span class=pill>🧭 ${fmt(w.dir,0)}°</span><span class=pill>☁️ ${fmt(w.cloud,0)}%</span><span class=pill>👁️ ${fmt((w.vis||0)/1000,1)} km</span><span class=pill>🌧️ ${fmt(w.precipProb||0,0)}% / ${fmt(w.precip||0,1)} mm</span><span class=pill>${wmoText(w.code)}</span></div>`; const el=$('#safetyStatus'); el.className=`status ${s.status}`; const icon=s.status==='go'?'✅':s.status==='caution'?'⚠️':'⛔'; el.textContent=`${icon} ${s.label}${s.reasons.length? ' — '+s.reasons.join(' · '): ''}`; }
 
-    // ===== JUMPS & LEADERBOARD =====
-    async function saveJump(j){ const user=await currentUser(); if(!user) throw new Error('Niet ingelogd'); const row={ user_id:user.id, dt:new Date(j.date).toISOString(), dz:j.dz, type:j.type, exit_alt:j.exitAlt, open_alt:j.openAlt, ff:j.ff, lat:j.lat, lon:j.lon, notes:j.notes||null, weather:j.weather||null }; const { error } = await supabase.from('jumps').insert(row); if(error) throw error; }
-    async function fetchMyJumps(){ const { data, error } = await supabase.from('jumps').select('*').order('dt',{ascending:false}); if(error) throw error; return data||[]; }
-    async function fetchLeaderboard(){ const { data, error } = await supabase.from('leaderboard').select('*'); if(error) throw error; return data||[]; }
+    function renderJumpWindows(jumpsCount, raw){
+      const out = [];
+      for(let k=0;k<24;k++){
+        const i = Math.min(raw.hourly.time.length-1, raw._startIdx + k);
+        const w={ time:raw.hourly.time[i], temp:raw.hourly.temperature_2m?.[i], wind:raw.hourly.wind_speed_10m?.[i], gust:raw.hourly.wind_gusts_10m?.[i], dir:raw.hourly.wind_direction_10m?.[i], precipProb:raw.hourly.precipitation_probability?.[i], precip:raw.hourly.precipitation?.[i], code:raw.hourly.weather_code?.[i], cloud:raw.hourly.cloud_cover?.[i], vis:raw.hourly.visibility?.[i] };
+        const s=evalSafety(jumpsCount,w); out.push({time:w.time,status:s.status});
+      }
+      const html = out.map(x=>`<span class="pill" style="border-color:${x.status==='go'?'#22c55e':x.status==='caution'?'#fbbf24':'#ef4444'}">${new Date(x.time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})} — ${x.status.toUpperCase()}</span>`).join(' ');
+      $('#jumpWindows').innerHTML = html || '<span class="sub">Geen data</span>';
+    }
 
-    function renderJumps(rows){ $('#jumpCount').textContent = `${rows.length} sprongen`; const tb=$('#jumpTable tbody'); tb.innerHTML=''; rows.forEach((j,i)=>{ const w=j.weather||{}; const tr=document.createElement('tr'); tr.innerHTML = `<td>${rows.length-i}</td><td>${new Date(j.dt).toLocaleString()}</td><td>${j.type}</td><td>${j.dz}</td><td>${j.exit_alt}</td><td>${j.ff}</td><td>${w.wind?fmt(w.wind,0):'-'}/${w.gust?fmt(w.gust,0):'-'}</td><td>${wmoText(w.code||'-')}</td>`; tb.appendChild(tr); }); }
-    function renderLeaderboard(rows){ const tb=$('#lbTable tbody'); tb.innerHTML=''; rows.forEach((r,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td>${r.username||'—'}</td><td>${r.jumps||0}</td><td>${r.xp||0}</td>`; tb.appendChild(tr); }); }
+    // ===== Crosswind & timer =====
+    function deg2rad(d){return d*Math.PI/180}
+    function crosswind(windSpeed, windDir, runwayHeading){ const diff = Math.abs(((windDir - runwayHeading + 540) % 360) - 180); const cross = Math.abs(windSpeed * Math.sin(deg2rad(diff))); const head = windSpeed * Math.cos(deg2rad(diff)); return {cross, head, diff}; }
+    $('#btnCross').onclick = ()=>{ const hdg=+$('#rwHeading').value||0; const dir=+$('#windDir').value||0; const spd=+$('#windSpd').value||0; const r=crosswind(spd,dir,hdg); const color = r.cross<10? 'var(--ok)': r.cross<20? 'var(--warn)': 'var(--bad)'; $('#crosswindOut').innerHTML = `<span style="color:${color}">Crosswind: ${fmt(r.cross,1)} km/u · Head/Tail: ${fmt(r.head,1)} km/u · Δ=${fmt(r.diff,0)}°</span>`; };
 
-    // ===== CHECKLISTS =====
-    const A_ITEMS = {
-      voorwaarden:[{id:'aff',label:'Static-line of AFF gegradueerd'},{id:'knvvl',label:'Lidmaatschapsnummer KNVvL'}],
-      stabiliteit:[
-        {id:'delta10',label:'10 seconden delta'},
-        {id:'tracking10',label:'10 seconden tracking'},
-        {id:'stabiele_achterwaartse_exit',label:'Stabiele achterwaartse exit'},
-        {id:'clear_pull',label:'Clear and Pull'},
-        {id:'instab_vrijeval_opheffen',label:'Onstabiele vrije val opheffen'},
-        {id:'draai_links_360',label:'Draai 360° links'},
-        {id:'draai_rechts_360',label:'Draai 360° rechts'},
-        {id:'backloop',label:'Backloop'}
-      ],
-      landingen15: Array.from({length:10},(_,i)=>({id:`landing15_${i+1}`,label:`15 meter landing #${i+1}`})),
-      formatie:[1,2,3,4,5].map(n=>({id:`form_${n}`,label:`Formatie instructiesprong ${n}`})),
-      algemene:[
-        {id:'25_sprongen',label:'25 vrijeval sprongen'},
-        {id:'15min_vrije_val',label:'15 minuten vrije val tijd'},
-        {id:'spotten',label:'Spotten'},
-        {id:'vouwen',label:'Vouwen hoofdparachute'}
-      ],
-      canopy:[1,2,3,4,5].map(n=>({id:`canopy_${n}`,label:`Canopy Control ${n}`}))
+    let sepTimer=null, sepLeft=0, sepRepeats=0;
+    function runSep(){ if(sepLeft<=0){ if(--sepRepeats<=0){ $('#sepDisplay').textContent='Done'; clearInterval(sepTimer); sepTimer=null; return; } sepLeft = +$('#sepSec').value||8; } $('#sepDisplay').textContent=String(sepLeft).padStart(2,'0'); sepLeft--; }
+    $('#btnSepStart').onclick = ()=>{ if(sepTimer){ clearInterval(sepTimer); sepTimer=null; } sepLeft = +$('#sepSec').value||8; sepRepeats = +$('#sepRepeats').value||6; runSep(); sepTimer=setInterval(runSep,1000); };
+
+    // ===== Checklists (mooier + progress) =====
+    const CHECK_SECTIONS = {
+      A: {
+        'Vrijeval': [ '10s delta','10s tracking','360° links','360° rechts','Backloop','Clear & Pull','Onstabiel herstellen' ],
+        'Formatie': [ 'Instructiesprong 1','Instructiesprong 2','Instructiesprong 3','Instructiesprong 4','Instructiesprong 5' ],
+        'Landingen (15 m)': Array.from({length:10},(_,i)=>`Landing ${i+1}`),
+        'Canopy': [ 'Pattern vliegen','Flare timing','Braked turns','Accuracy landing' ],
+        'Algemeen': [ 'Spotten','Vouwen hoofdparachute' ]
+      },
+      B: {
+        'Vrijeval': [ 'Stabiele exits','Tracking pattern','Docking discipline' ],
+        'Formatie': [ 'Instructiesprong 1','Instructiesprong 2','Instructiesprong 3','Formatie 4','Formatie 5','Formatie 6','Formatie 7','Formatie 8','Formatie 9','Formatie 10' ],
+        'Landingen (5 m)': Array.from({length:10},(_,i)=>`Landing ${i+1}`),
+        'Canopy': Array.from({length:10},(_,i)=>`Canopy control ${i+1}`),
+        'Algemeen': [ 'Eigen uitrusting check','Harnas beheersen','BBR discipline' ]
+      }
     };
 
-    const B_ITEMS = {
-      voorwaarden:[{id:'a_brevet',label:'A‑brevet (datum behaald)'},{id:'knvvl_b',label:'Lidmaatschapsnummer KNVvL'},{id:'constructief',label:'Constructieve instelling t.a.v. veiligheid'}],
-      formatie:[1,2,3,4,5].map(n=>({id:`b_form_${n}`,label:`Formatie instructiesprong ${n}`})).concat([6,7,8,9,10].map(n=>({id:`b_form_${n}`,label:`Formatie ${n} (minimaal 3 deelnemers)`}))),
-      landingen5: Array.from({length:10},(_,i)=>({id:`landing5_${i+1}`,label:`5 meter landing #${i+1}`})),
-      algemene:[
-        {id:'50_sprongen',label:'50 vrijeval sprongen'},
-        {id:'30min_vrije_val',label:'30 minuten vrijeval tijd'},
-        {id:'uitrusting_check',label:'Eigen springuitrusting controleren op veiligheid'},
-        {id:'harnas',label:'Harnas beheersen'}
-      ],
-      canopy: Array.from({length:10},(_,i)=>({id:`b_canopy_${i+1}`,label:`Canopy Control ${i+1}`})),
-      bbr:[{id:'bbr_discipline',label:'BBR discipline (datum behaald)'}]
-    };
+    async function loadChecklist(license){ const user=await supaUser(); if(!user) return {}; const { data, error } = await supabase.from('checklists').select('*').eq('user_id',user.id).eq('license',license).single(); if(error && error.code!=='PGRST116'){ console.warn(error); } return data? (data.data||{}):{}; }
+    async function saveChecklist(license, data){ const user=await supaUser(); if(!user) throw new Error('Niet ingelogd'); const row={ user_id:user.id, license, data, updated_at:new Date().toISOString() }; const { error } = await supabase.from('checklists').upsert(row); if(error) throw error; }
 
-    function makeChecklist(container, model, state){
-      container.innerHTML='';
-      const sections=[
-        ['Voorwaarde eisen', 'voorwaarden'],
-        ['Stabiliteitseisen', 'stabiliteit'],
-        ['15 meter landing', 'landingen15'],
-        ['Formatie instructiesprongen', 'formatie'],
-        ['Algemene eisen', 'algemene'],
-        ['Canopy Control', 'canopy']
-      ];
-      if(model===B_ITEMS){ sections.splice(2,1,['5 meter landing','landingen5']); sections.push(['BBR discipline eisen','bbr']); }
-
-      sections.forEach(([title,key])=>{
-        if(!model[key]) return;
-        const h = document.createElement('h4'); h.textContent=title; h.style.margin='12px 0 8px'; h.className='sub'; container.appendChild(h);
-        model[key].forEach(item=>{
-          const row=document.createElement('div'); row.className='checkRow';
-          const it = state[item.id]||{};
-          row.innerHTML = `
-            <div>${item.label}</div>
-            <input type="date" value="${it.date||''}" data-date="${item.id}" />
-            <input type="text" placeholder="sprong #" value="${it.jump||''}" data-jump="${item.id}" />
-            <input type="checkbox" ${it.done? 'checked':''} data-done="${item.id}" />`;
-          container.appendChild(row);
+    function renderChecklists(state){
+      const c = $('#clContainer'); c.innerHTML='';
+      ['A','B'].forEach(lic=>{
+        const h = document.createElement('h3'); h.textContent = `Licentie ${lic}`; c.appendChild(h);
+        const sections = CHECK_SECTIONS[lic];
+        Object.entries(sections).forEach(([title, items])=>{
+          const sec = document.createElement('div'); sec.className='cl-section';
+          const secId = `${lic}:${title}`;
+          const doneCount = (items.filter(it=> (state[lic]?.[secId]?.[it]?.done))).length;
+          const pct = Math.round((doneCount / items.length) * 100);
+          sec.innerHTML = `<div class="cl-header"><div class="sub">${title}</div><div style="min-width:160px"><div class="progress"><span style="width:${pct}%"></span></div><div class="sub" style="text-align:right">${doneCount}/${items.length}</div></div></div>`;
+          const box = document.createElement('div'); box.className='cl-items';
+          items.forEach(it=>{
+            const key = `${lic}:${title}`;
+            const val = state[lic]?.[key]?.[it] || { done:false, date:'', note:'' };
+            const row = document.createElement('div'); row.className='cl-item';
+            row.innerHTML = `
+              <input type="checkbox" ${val.done?'checked':''} data-lic="${lic}" data-sec="${title}" data-it="${it}">
+              <div style="font-weight:700">${it}</div>
+              <div class="cl-right">
+                <input type="date" value="${val.date||''}" data-date="${lic}|${title}|${it}">
+                <input type="text" placeholder="notitie (optioneel)" value="${val.note||''}" data-note="${lic}|${title}|${it}">
+              </div>`;
+            box.appendChild(row);
+          });
+          sec.appendChild(box); c.appendChild(sec);
         });
       });
     }
 
-    async function loadChecklist(license){ const user=await currentUser(); if(!user) return {}; const { data, error } = await supabase.from('checklists').select('*').eq('user_id',user.id).eq('license',license).single(); if(error && error.code!=='PGRST116'){ console.warn(error); } return data? (data.data||{}):{}; }
-    async function saveChecklist(license, data){ const user=await currentUser(); if(!user) throw new Error('Niet ingelogd'); const row={ user_id:user.id, license, data, updated_at:new Date().toISOString() }; const { error } = await supabase.from('checklists').upsert(row); if(error) throw error; }
-
-    function collectChecklist(container){ const out={}; container.querySelectorAll('[data-date]').forEach(el=>{ const id=el.getAttribute('data-date'); out[id]=out[id]||{}; out[id].date=el.value||null; }); container.querySelectorAll('[data-jump]').forEach(el=>{ const id=el.getAttribute('data-jump'); out[id]=out[id]||{}; out[id].jump=el.value||null; }); container.querySelectorAll('[data-done]').forEach(el=>{ const id=el.getAttribute('data-done'); out[id]=out[id]||{}; out[id].done=el.checked; }); return out; }
-
-    function autoFillChecklistA(state, stats){ if(stats.jumps>=25){ state['25_sprongen']={...(state['25_sprongen']||{}), done:true}; } if(stats.freefall>=900){ state['15min_vrije_val']={...(state['15min_vrije_val']||{}), done:true}; } return state; }
-    function autoFillChecklistB(state, stats){ if(stats.jumps>=50){ state['50_sprongen']={...(state['50_sprongen']||{}), done:true}; } if(stats.freefall>=1800){ state['30min_vrije_val']={...(state['30min_vrije_val']||{}), done:true}; } return state; }
-
-    // ===== APP STATE =====
-    let profile=null, lastWeather=null, aState={}, bState={};
-
-    // ===== UI ACTIONS =====
-    $('#btnRegister').onclick = async ()=>{
-      const email=$('#regEmail').value.trim(); const pass=$('#regPass').value; const username=$('#regUsername').value.trim();
-      if(!email || pass.length<6){ $('#authMsg').textContent='Vul e‑mail in en wachtwoord (min. 6).'; return; }
-      const { data, error } = await supabase.auth.signUp({ email, password: pass });
-      if(error){ $('#authMsg').textContent='Registratie fout: '+error.message; return; }
-      const user = await currentUser(); if(!user){ $('#authMsg').textContent='Check je mailbox voor bevestiging en log in.'; return; }
-      await supabase.from('profiles').insert({ id:user.id, username, dz:'Skydive Teuge', lat:52.2375, lon:6.05, api:null });
-      $('#authMsg').textContent='Account aangemaakt. Je kunt nu inloggen.';
-    };
-
-    $('#btnLogin').onclick = async ()=>{
-      const email=$('#loginEmail').value.trim(); const pass=$('#loginPass').value;
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
-      if(error){ $('#authMsg').textContent='Login fout: '+error.message; return; }
-      showApp(); await refreshAll();
-    };
-
-    $('#btnLogout').onclick = async ()=>{ await supabase.auth.signOut(); showAuth(); };
-
-    $('#btnSaveProfile').onclick = async ()=>{
-      const user=await currentUser(); if(!user) return;
-      const row={ id:user.id, username:$('#pUsername').value.trim(), dz:$('#pDZ').value.trim(), api:$('#pApi').value.trim()||null, lat:parseFloat($('#pLat').value)||52.2375, lon:parseFloat($('#pLon').value)||6.05 };
-      const { error } = await supabase.from('profiles').upsert(row); if(error){ alert('Opslaan mislukt: '+error.message); return; }
-      alert('Profiel opgeslagen'); await refreshAll();
-    };
-
-    $('#btnRefreshWeather').onclick = async ()=>{ if(!profile) return; try{ const w=await fetchWeather(profile.lat,profile.lon,profile.api); lastWeather=w; renderWeather(profile,w);}catch{ alert('Weer ophalen mislukt'); } };
-
-    // Locatie zoeken
-    let locTimer=null; $('#locSearch').addEventListener('input', ()=>{ clearTimeout(locTimer); const q=$('#locSearch').value.trim(); if(q.length<2){ $('#locList').classList.add('hidden'); $('#locList').innerHTML=''; return; } locTimer=setTimeout(async()=>{ try{ const res=await searchLocation(q); const ul=$('#locList'); ul.innerHTML = res.map(r=>`<li data-lat="${r.lat}" data-lon="${r.lon}">${r.name}</li>`).join(''); ul.classList.remove('hidden'); ul.querySelectorAll('li').forEach(li=> li.onclick=()=>{ $('#pLat').value = li.getAttribute('data-lat'); $('#pLon').value = li.getAttribute('data-lon'); $('#locSearch').value = li.textContent; ul.classList.add('hidden'); }); }catch(e){ console.warn(e); } }, 300); });
-
-    // Jump form
-    $('#btnFormWeather').onclick = async ()=>{ const lat=parseFloat($('#jfLat').value), lon=parseFloat($('#jfLon').value); try{ const w=await fetchWeather(lat,lon,($('#pApi').value||'').trim()); lastWeather=w; $('#formWeatherSnapshot').textContent = `Weer: ${fmt(w.wind,0)} km/u, gust ${fmt(w.gust,0)}, ${fmt((w.vis||0)/1000,1)} km zicht, ${fmt(w.cloud,0)}% bewolking, ${fmt(w.precipProb||0,0)}%/${fmt(w.precip||0,1)} mm, ${wmoText(w.code)}`; }catch{ $('#formWeatherSnapshot').textContent='Weer mislukt'; } };
-    $('#jumpForm').onsubmit = async (ev)=>{ ev.preventDefault(); const j={ date:new Date($('#jfDate').value).toISOString(), dz:$('#jfDZ').value.trim(), type:$('#jfType').value, exitAlt:parseInt($('#jfExit').value), openAlt:parseInt($('#jfOpen').value), ff:parseInt($('#jfFF').value), lat:parseFloat($('#jfLat').value), lon:parseFloat($('#jfLon').value), notes:$('#jfNotes').value.trim(), weather:lastWeather||null }; try{ await saveJump(j); $('#jfFF').value=''; $('#jfNotes').value=''; await refreshAll(); }catch(e){ alert('Opslaan mislukt: '+e.message+"\n\nWaarschijnlijk ontbreken Supabase tabellen. Zie de SQL onderaan deze file."); } };
-
-    // Checklist save/auto
-    $('#btnSaveA').onclick = async ()=>{ const data=collectChecklist($('#checklistA')); try{ await saveChecklist('A', data); alert('A‑checklist opgeslagen'); }catch(e){ alert('Opslaan mislukt: '+e.message); } };
-    $('#btnSaveB').onclick = async ()=>{ const data=collectChecklist($('#checklistB')); try{ await saveChecklist('B', data); alert('B‑checklist opgeslagen'); }catch(e){ alert('Opslaan mislukt: '+e.message); } };
-    $('#btnAutoA').onclick = async ()=>{ const stats = await calcStats(); aState = autoFillChecklistA(aState, stats); makeChecklist($('#checklistA'), A_ITEMS, aState); };
-    $('#btnAutoB').onclick = async ()=>{ const stats = await calcStats(); bState = autoFillChecklistB(bState, stats); makeChecklist($('#checklistB'), B_ITEMS, bState); };
-
-    async function calcStats(){ const rows = await fetchMyJumps(); const freefall = rows.reduce((a,j)=>a+(j.ff||0),0); return { jumps: rows.length, freefall } }
-
-    // Render helpers
-    function showApp(){ $('#authSection').classList.add('hidden'); $('#app').classList.remove('hidden'); $('#topToolbar').hidden=false; }
-    function showAuth(){ $('#authSection').classList.remove('hidden'); $('#app').classList.add('hidden'); $('#topToolbar').hidden=true; }
-
-    async function refreshAll(){ const user=await currentUser(); if(!user){ showAuth(); return; } $('#chipUser').textContent=`👤 ${user.email}`; const prof = await ensureProfile(user); profile=prof; $('#pUsername').value=prof.username||''; $('#pDZ').value=prof.dz||''; $('#pApi').value=prof.api||''; $('#pLat').value=prof.lat||''; $('#pLon').value=prof.lon||''; $('#jfDZ').value=prof.dz||''; $('#jfLat').value=prof.lat||''; $('#jfLon').value=prof.lon||''; $('#jfDate').value=nowLocalDatetime(); try{ const w=await fetchWeather(prof.lat,prof.lon,prof.api); lastWeather=w; renderWeather(prof,w);}catch{ $('#weatherData').innerHTML='<span class="sub">Weer niet beschikbaar</span>'; $('#safetyStatus').textContent='—'; }
-      // jumps + leaderboard
-      try{ const jumps = await fetchMyJumps(); renderJumps(jumps);}catch(e){ console.warn(e); }
-      try{ const lb = await fetchLeaderboard(); renderLeaderboard(lb);}catch(e){ console.warn(e); }
-      // checklists
-      try{ aState = await loadChecklist('A'); makeChecklist($('#checklistA'), A_ITEMS, aState);}catch(e){ console.warn(e); }
-      try{ bState = await loadChecklist('B'); makeChecklist($('#checklistB'), B_ITEMS, bState);}catch(e){ console.warn(e); }
+    function collectChecklists(){
+      const state={ A:{}, B:{} };
+      $$('#clContainer input[type="checkbox"]').forEach(cb=>{
+        const lic=cb.getAttribute('data-lic'); const sec=cb.getAttribute('data-sec'); const it=cb.getAttribute('data-it');
+        const key = `${lic}:${sec}`; state[lic][key] = state[lic][key]||{}; state[lic][key][it] = state[lic][key][it]||{}; state[lic][key][it].done = cb.checked;
+      });
+      $$('#clContainer [data-date]').forEach(el=>{ const [lic,sec,it]=el.getAttribute('data-date').split('|'); const key=`${lic}:${sec}`; state[lic][key]=state[lic][key]||{}; state[lic][key][it]=state[lic][key][it]||{}; state[lic][key][it].date=el.value||''; });
+      $$('#clContainer [data-note]').forEach(el=>{ const [lic,sec,it]=el.getAttribute('data-note').split('|'); const key=`${lic}:${sec}`; state[lic][key]=state[lic][key]||{}; state[lic][key][it]=state[lic][key][it]||{}; state[lic][key][it].note=el.value||''; });
+      return state;
     }
 
-    // INIT
-    (async function init(){ const { data:{ user } } = await supabase.auth.getUser(); if(user){ showApp(); } else { showAuth(); } $('#jfDate').value = nowLocalDatetime(); await refreshAll(); })();
+    function autoFillChecklists(state, jumps){
+      // markeer doel-items op basis van sprongcount
+      if(jumps>=25){ const keyA='A:Algemeen'; state.A=state.A||{}; state.A[keyA]=state.A[keyA]||{}; (state.A[keyA]['Spotten']=state.A[keyA]['Spotten']||{}).done = state.A[keyA]['Spotten'].done || false; }
+      if(jumps>=50){ const keyB='B:Algemeen'; state.B=state.B||{}; state.B[keyB]=state.B[keyB]||{}; (state.B[keyB]['BBR discipline']=state.B[keyB]['BBR discipline']||{}).done = state.B[keyB]['BBR discipline'].done || false; }
+      return state;
+    }
 
+    // ===== Jumps & Stats =====
+    async function saveJump(j){ const user=await supaUser(); if(!user) throw new Error('Niet ingelogd'); const row={ user_id:user.id, dt:new Date(j.date).toISOString(), dz:j.dz, type:j.type, exit_alt:j.exitAlt, open_alt:j.openAlt, ff:j.ff, lat:j.lat, lon:j.lon, notes:j.notes||null, weather:j.weather||null }; const { error } = await supabase.from('jumps').insert(row); if(error) throw error; }
+    async function fetchMyJumps(){ const { data, error } = await supabase.from('jumps').select('*').order('dt',{ascending:false}); if(error) throw error; return data||[]; }
+
+    function renderJumps(rows){ $('#jumpCount').textContent = `${rows.length} sprongen`; const tb=$('#jumpTable tbody'); tb.innerHTML=''; rows.forEach((j,i)=>{ const w=j.weather||{}; const tr=document.createElement('tr'); tr.innerHTML = `<td>${rows.length-i}</td><td>${new Date(j.dt).toLocaleString()}</td><td>${j.type}</td><td>${j.dz}</td><td>${j.exit_alt}</td><td>${j.ff}</td><td>${w.wind?fmt(w.wind,0):'-'}/${w.gust?fmt(w.gust,0):'-'}</td><td>${wmoText(w.code||'-')}</td>`; tb.appendChild(tr); }); }
+
+    function renderCharts(rows){
+      const byMonth = {};
+      const byType = {};
+      rows.forEach(j=>{ const d=new Date(j.dt); const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; byMonth[key]=(byMonth[key]||0)+1; byType[j.type]=(byType[j.type]||0)+1; });
+      const mLabels = Object.keys(byMonth).sort(); const mData = mLabels.map(k=>byMonth[k]);
+      const tLabels = Object.keys(byType); const tData = tLabels.map(k=>byType[k]);
+      if(window._c1) window._c1.destroy(); if(window._c2) window._c2.destroy();
+      window._c1 = new Chart($('#chartMonthly'), { type:'bar', data:{ labels:mLabels, datasets:[{ label:'Sprongen', data:mData }] }, options:{ plugins:{legend:{display:false}}, scales:{ y:{ beginAtZero:true } } } });
+      window._c2 = new Chart($('#chartTypes'), { type:'doughnut', data:{ labels:tLabels, datasets:[{ data:tData }] }, options:{ plugins:{legend:{position:'bottom'}} } });
+    }
+
+    // ===== Tabs =====
+    function showTab(name){ $$('#app > .section').forEach(s=>s.classList.remove('active')); $(`#tab-${name}`).classList.add('active'); $$('#tabs .tab').forEach(t=>t.classList.toggle('active', t.getAttribute('data-tab')===name)); window.scrollTo({top:0,behavior:'smooth'}); }
+    $$('#tabs .tab').forEach(b=> b.onclick = ()=> showTab(b.getAttribute('data-tab')) );
+
+    // ===== Auth handlers =====
+    $('#btnRegister').onclick = async ()=>{ const email=$('#regEmail').value.trim(); const pass=$('#regPass').value; const username=$('#regUsername').value.trim(); if(!email||pass.length<6){ $('#authMsgReg').textContent='Vul e‑mail in en wachtwoord (min.6)'; return; } const { data, error } = await supabase.auth.signUp({ email, password: pass }); if(error){ $('#authMsgReg').textContent='Registratie fout: '+error.message; return; } const user=await supaUser(); if(user){ await supabase.from('profiles').insert({ id:user.id, username, dz:'Skydive Teuge', lat:52.2375, lon:6.05, api:null }); } $('#authMsgReg').textContent='Account aangemaakt. Log nu in.'; };
+
+    $('#btnLogin').onclick = async ()=>{ const email=$('#loginEmail').value.trim(); const pass=$('#loginPass').value; const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass }); if(error){ $('#authMsgLogin').textContent='Login fout: '+error.message; return; } $('#authMsgLogin').textContent=''; await afterLogin(); };
+
+    $('#btnLogout').onclick = async ()=>{ await supabase.auth.signOut(); showAuth(); };
+    $('#btnLogout2').onclick = async ()=>{ await supabase.auth.signOut(); showAuth(); };
+
+    function showAuth(){ $('#auth').classList.add('active'); $('#app').style.display='none'; $('#topToolbar').hidden=true; }
+    function showApp(){ $('#auth').classList.remove('active'); $('#app').style.display='block'; $('#topToolbar').hidden=false; }
+
+    async function afterLogin(){ showApp(); await refreshAll(); showTab('weer'); }
+
+    // ===== Profile & Weather =====
+    async function refreshAll(){ const user = await supaUser(); if(!user){ showAuth(); return; } $('#chipUser').textContent = `👤 ${user.email}`; $('#accEmail').textContent = user.email; const prof = await ensureProfile(user); $('#pUsername').value=prof.username||''; $('#pDZ').value=prof.dz||''; $('#pApi').value=prof.api||''; $('#pLat').value=prof.lat||''; $('#pLon').value=prof.lon||''; $('#jfDZ').value=prof.dz||''; $('#jfLat').value=prof.lat||''; $('#jfLon').value=prof.lon||''; $('#jfDate').value = nowLocalDatetime(); try{ const w=await fetchWeather(prof.lat,prof.lon,prof.api); w.raw._startIdx = w.idx; renderWeather((await fetchMyJumps()).length, w); }catch{ $('#weatherData').innerHTML='<span class="sub">Weer niet beschikbaar</span>'; $('#safetyStatus').textContent='—'; }
+      const rows = await fetchMyJumps(); renderJumps(rows); renderCharts(rows);
+      // load checklists
+      const a = await loadChecklist('A'); const b = await loadChecklist('B'); _clState = { A:a, B:b }; renderChecklists(_clState);
+    }
+
+    $('#btnRefreshWeather').onclick = async ()=>{ const rows=await fetchMyJumps(); const prof={ lat:+$('#pLat').value, lon:+$('#pLon').value, api:$('#pApi').value.trim() }; const w=await fetchWeather(prof.lat,prof.lon,prof.api); w.raw._startIdx = w.idx; renderWeather(rows.length, w); };
+    $('#btnRefreshWeather2').onclick = ()=> $('#btnRefreshWeather').click();
+
+    $('#btnJumpWindows').onclick = async ()=>{ const rows=await fetchMyJumps(); const prof={ lat:+$('#pLat').value, lon:+$('#pLon').value, api:$('#pApi').value.trim() }; const w=await fetchWeather(prof.lat,prof.lon,prof.api); w.raw._startIdx = w.idx; renderJumpWindows(rows.length, w.raw); };
+
+    $('#btnSaveProfile').onclick = async ()=>{ const user=await supaUser(); const row={ id:user.id, username:$('#pUsername').value.trim(), dz:$('#pDZ').value.trim(), api:$('#pApi').value.trim()||null, lat:+$('#pLat').value||52.2375, lon:+$('#pLon').value||6.05 }; const { error } = await supabase.from('profiles').upsert(row); if(error){ alert('Opslaan mislukt: '+error.message); return; } alert('Profiel opgeslagen'); await refreshAll(); };
+
+    $('#dzPreset').onchange = ()=>{ const v=$('#dzPreset').value; if(!v) return; const [name,lat,lon] = v.split('|'); $('#pDZ').value=name; $('#pLat').value=lat; $('#pLon').value=lon; };
+
+    let locTimer=null; $('#locSearch').addEventListener('input', ()=>{ clearTimeout(locTimer); const q=$('#locSearch').value.trim(); const ul=$('#locList'); if(q.length<2){ ul.style.display='none'; ul.innerHTML=''; return; } locTimer=setTimeout(async()=>{ try{ const res=await searchLocation(q); ul.innerHTML = res.map(r=>`<li data-lat="${r.lat}" data-lon="${r.lon}" style="padding:8px;border-radius:10px;cursor:pointer">${r.name}</li>`).join(''); ul.style.display='block'; ul.querySelectorAll('li').forEach(li=> li.onclick=()=>{ $('#pLat').value=li.getAttribute('data-lat'); $('#pLon').value=li.getAttribute('data-lon'); $('#locSearch').value = li.textContent; ul.style.display='none'; }); }catch(e){ console.warn(e); } }, 300); });
+
+    // ===== Jump form =====
+    let lastWeather=null;
+    $('#btnFormWeather').onclick = async ()=>{ const lat=+$('#jfLat').value, lon=+$('#jfLon').value; try{ const w=await fetchWeather(lat,lon,($('#pApi').value||'').trim()); lastWeather=w; $('#formWeatherSnapshot').textContent = `Weer: ${fmt(w.wind,0)} km/u, gust ${fmt(w.gust,0)}, ${fmt((w.vis||0)/1000,1)} km zicht, ${fmt(w.cloud,0)}% bewolking, ${fmt(w.precipProb||0,0)}%/${fmt(w.precip||0,1)} mm, ${wmoText(w.code)}`; $('#windDir').value = fmt(w.dir,0); $('#windSpd').value = fmt(w.wind,0); }catch{ $('#formWeatherSnapshot').textContent='Weer mislukt'; } };
+
+    $('#jumpForm').onsubmit = async (ev)=>{ ev.preventDefault(); const j={ date:new Date($('#jfDate').value).toISOString(), dz:$('#jfDZ').value.trim(), type:$('#jfType').value, exitAlt:parseInt($('#jfExit').value), openAlt:parseInt($('#jfOpen').value), ff:parseInt($('#jfFF').value), lat:+$('#jfLat').value, lon:+$('#jfLon').value, notes:$('#jfNotes').value.trim(), weather:lastWeather||null }; try{ await saveJump(j); $('#jfFF').value=''; $('#jfNotes').value=''; await refreshAll(); showTab('sprongen'); }catch(e){ alert('Opslaan mislukt: '+e.message+"\n\nWaarschijnlijk ontbreken Supabase tabellen. Zie het SQL-blok onderaan v4 of v5 doc."); } };
+
+    // ===== Checklists handlers =====
+    let _clState = { A:{}, B:{} };
+    $('#btnSaveChecklists').onclick = async ()=>{ const state=collectChecklists(); try{ await saveChecklist('A', state.A); await saveChecklist('B', state.B); alert('Checklists opgeslagen'); }catch(e){ alert('Opslaan mislukt: '+e.message); } };
+    $('#btnAutoFill').onclick = async ()=>{ const rows = await fetchMyJumps(); _clState = collectChecklists(); _clState = autoFillChecklists(_clState, rows.length); renderChecklists(_clState); };
+
+    // ===== Init =====
+    const { data:{ user } } = await supabase.auth.getUser(); if(user){ showApp(); await refreshAll(); } else { showAuth(); }
+    $('#jfDate').value = nowLocalDatetime();
   })();
   </script>
-
-  <!--
-  =======================
-  SUPABASE SQL — voer dit 1x uit in SQL Editor
-  =======================
-
-  -- Profielen (1:1 met auth.users)
-  create table if not exists public.profiles (
-    id uuid primary key references auth.users(id) on delete cascade,
-    username text unique,
-    dz text default 'Skydive Teuge',
-    lat double precision default 52.2375,
-    lon double precision default 6.05,
-    api text,
-    created_at timestamptz default now()
-  );
-
-  -- Sprongen
-  create table if not exists public.jumps (
-    id bigserial primary key,
-    user_id uuid not null references auth.users(id) on delete cascade,
-    dt timestamptz not null,
-    dz text not null,
-    type text not null,
-    exit_alt int not null,
-    open_alt int not null,
-    ff int not null,
-    lat double precision,
-    lon double precision,
-    notes text,
-    weather jsonb,
-    created_at timestamptz default now()
-  );
-
-  -- XP functie + Leaderboard view
-  create or replace function public.jump_xp(exit_alt int, ff int, type text)
-  returns int language sql immutable as $$
-    select 120
-         + least(80, greatest(0, exit_alt)/100)::int
-         + case when ff > 45 then 20 else 0 end
-         + case when coalesce(type,'') <> 'Tandem' then 20 else 0 end
-  $$;
-
-  create or replace view public.leaderboard as
-    select p.username,
-           count(j.id)::int as jumps,
-           coalesce(sum(public.jump_xp(j.exit_alt, j.ff, j.type)),0)::int as xp
-    from public.profiles p
-    left join public.jumps j on j.user_id = p.id
-    group by p.id, p.username
-    order by xp desc, jumps desc, username asc;
-
-  -- Checklists (JSON per licentie per user)
-  create table if not exists public.checklists (
-    user_id uuid not null references auth.users(id) on delete cascade,
-    license text not null check (license in ('A','B')),
-    data jsonb not null default '{}'::jsonb,
-    updated_at timestamptz default now(),
-    primary key (user_id, license)
-  );
-
-  -- RLS aan
-  alter table public.profiles enable row level security;
-  alter table public.jumps enable row level security;
-  alter table public.checklists enable row level security;
-
-  -- Policies (eigen data)
-  create policy if not exists "profiles_self_select" on public.profiles for select using (auth.uid() = id);
-  create policy if not exists "profiles_self_upsert" on public.profiles for insert with check (auth.uid() = id);
-  create policy if not exists "profiles_self_update" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
-
-  create policy if not exists "jumps_own_select" on public.jumps for select using (auth.uid() = user_id);
-  create policy if not exists "jumps_own_insert" on public.jumps for insert with check (auth.uid() = user_id);
-  create policy if not exists "jumps_own_update_delete" on public.jumps for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
-
-  create policy if not exists "checklists_own_select" on public.checklists for select using (auth.uid() = user_id);
-  create policy if not exists "checklists_own_upsert" on public.checklists for insert with check (auth.uid() = user_id);
-  create policy if not exists "checklists_own_update" on public.checklists for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
-
-  -- Leaderboard publiek leesbaar
-  grant usage on schema public to anon, authenticated;
-  grant select on public.leaderboard to anon, authenticated;
-  -->
 </body>
 </html>
